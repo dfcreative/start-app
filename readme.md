@@ -47,7 +47,7 @@ createDemo({
 	//default source sound (url) to play
 	source: '',
 
-	//API token (for soundcloud, youtube etc)
+	//API token (for soundcloud, youtube etc.) or object {soundcloud: ..., youtube: ...}
 	token: null,
 
 	//allow for dropping files from browser to source
@@ -64,6 +64,9 @@ createDemo({
 
 	//start song as only as ready
 	autoplay: true,
+
+	//repeat played track or stop at the end
+	repeat: true,
 
 	//show fps stats
 	fps: true,

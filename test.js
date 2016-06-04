@@ -3,7 +3,7 @@ var waveform = require('./waveform');
 
 
 createDemo({
-	source: 'https://soundcloud.com/ivanmasa/ibiza-global-radio-einmusika-radio-show-by-einmusik-1062016-mixed-by-ivan-masa'
+	source: null,
 	// fullscreen: true,
 	// microphone: true,
 	// autostart: true,
@@ -13,7 +13,7 @@ createDemo({
 	// donate: '',
 	// orientation: 'horizontal'
 }, function (err, data) {
-	console.log('loaded');
+	console.log('loaded', data);
 
 	var N = 2048;
 	var sine = new Float32Array(N);

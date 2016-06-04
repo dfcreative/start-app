@@ -7,7 +7,7 @@ var extend = require('xtend/mutable');
 var sf = require('sheetify');
 var className = sf('./index.css');
 var ctx = require('audio-context');
-var URL = require('url');
+var URLParser = require('url');
 var scResolve = require('soundcloud-resolve');
 var fs = require('fs');
 
@@ -26,18 +26,66 @@ function StartApp (opts, cb) {
 	if (!this.container) this.container = document.body || document.documentElement;
 	this.container.classList.add(className);
 
-	//create file input area
-	if (this.source) {
-		this.sourceEl = document.createElement('div');
-		this.sourceEl.classList.add('source');
-		this.sourceEl.innerHTML = `
-			<i class="source-icon"></i>
-			<span class="source-text">${this.source}</span>
+	//create file/url input area
+	this.sourceEl = document.createElement('div');
+	this.sourceEl.classList.add('source');
+	this.sourceEl.innerHTML = `
+		<i class="source-icon"></i>
+		<span class="source-text"></span>
+	`;
+	this.sourceIcon = this.sourceEl.querySelector('.source-icon');
+	this.sourceText = this.sourceEl.querySelector('.source-text');
+	this.sourceIcon.innerHTML = fs.readFileSync(__dirname + '/image/open.svg', 'utf8');
+	if (!this.source) {
+		this.sourceText.innerHTML = `
+			<span class="source-links">
+				<a href="#open-file" class="source-link">
+					Open file
+					<input class="source-input source-input-file" type="file"/>
+				</a>
+				or
+				<a href="#enter-url" class="source-link source-link-url">
+					enter URL
+				</a>
+			</span>
+			<input hidden placeholder="http://url.to/file.ogg" class="source-input source-input-url" type="url"/>
+			<strong class="source-title"></strong>
 		`;
-		this.sourceIcon = this.sourceEl.querySelector('.source-icon');
-		this.sourceText = this.sourceEl.querySelector('.source-text');
-		this.container.appendChild(this.sourceEl);
+		this.sourceTitle = this.sourceEl.querySelector('.source-title');
+		this.sourceLinks = this.sourceEl.querySelector('.source-links');
+		this.sourceInputFile = this.sourceEl.querySelector('.source-input-file');
+		this.sourceInputFile.addEventListener('change', (e) => {
+			this.setSource(this.sourceInputFile.files);
+		});
+		this.sourceInputURL = this.sourceEl.querySelector('.source-input-url');
+		this.sourceInputURL.addEventListener('blur', (e) => {
+			this.sourceLinks.removeAttribute('hidden');
+			this.sourceInputURL.setAttribute('hidden', true);
+			this.sourceIcon.innerHTML = fs.readFileSync(__dirname + '/image/open.svg', 'utf8');
+		});
+		this.sourceInputURL.addEventListener('change', (e) => {
+			e.preventDefault();
+			this.sourceInputURL.blur();
+			this.sourceLinks.setAttribute('hidden', true);
+			this.sourceIcon.innerHTML = fs.readFileSync(__dirname + '/image/loading.svg', 'utf8');
+			this.sourceTitle.innerHTML = `loading`;
+			this.setSource(this.sourceInputURL.value, (err) => {
+				if (err) {
+					this.sourceLinks.removeAttribute('hidden');
+					this.sourceIcon.innerHTML = fs.readFileSync(__dirname + '/image/open.svg', 'utf8');
+					this.sourceInputURL.value = '';
+				}
+			});
+		});
+		this.sourceEl.querySelector('.source-link-url').addEventListener('click', (e) => {
+			e.preventDefault();
+			this.sourceEl.querySelector('.source-links').setAttribute('hidden', true);
+			this.sourceInputURL.removeAttribute('hidden');
+			this.sourceInputURL.focus();
+			this.sourceIcon.innerHTML = fs.readFileSync(__dirname + '/image/url.svg', 'utf8');
+		});
 	}
+	this.container.appendChild(this.sourceEl);
 
 	this.init(this);
 }
@@ -48,7 +96,10 @@ inherits(StartApp, Emitter);
 StartApp.prototype.dragAndDrop = true;
 
 //Default (my) soundcloud API token
-StartApp.prototype.token = '6b7ae5b9df6a0eb3fcca34cc3bb0ef14';
+StartApp.prototype.token = {
+	soundcloud: '6b7ae5b9df6a0eb3fcca34cc3bb0ef14',
+	youtube: 'AIzaSyBPxsJRzvSSz_LOpejJhOGPyEzlRxU062M'
+};
 
 
 /**
@@ -84,12 +135,7 @@ StartApp.prototype.initDragAndDrop = function () {
 		this.container.classList.remove('dragover');
 
 		var dt = e.dataTransfer;
-		for (var i = 0; i < dt.files.length; i++) {
-			console.log(dt.files[i])
-			console.log(dt.items[i])
-			console.log(dt.types[i])
-		}
-
+		this.setSource(dt.files);
 	});
 
 	this.container.addEventListener('dragover', (e) => {
@@ -101,16 +147,47 @@ StartApp.prototype.initDragAndDrop = function () {
 /**
  * Set source to play
  */
-StartApp.prototype.setSource = function (src) {
-	var url = URL.parse(src);
-	console.log(url);
+StartApp.prototype.setSource = function (src, cb) {
+	//Undefined source - no action
+	if (!src) {
+		return this;
+	}
 
-	//detect known sources
+	//find first audio file from the list
+	if (src instanceof FileList) {
+		for (var i = 0; i < src.length; i++) {
+			if (/audio/.test(src[i].type)) {
+				src = src[i];
+				break;
+			}
+		}
+	}
+
+	//File instance case
+	if (src instanceof File) {
+		var url = URL.createObjectURL(src);
+		this.sourceIcon.innerHTML = fs.readFileSync(__dirname + '/image/record.svg', 'utf8');
+		this.sourceTitle.innerHTML = src.name;
+		cb(null, url);
+
+		return this;
+	}
+
+
+	//handle plain URL case
+	if (typeof src === 'string') {
+		var url = URLParser.parse(src);
+	}
+
 	if (url.hostname === 'soundcloud.com') {
-		this.sourceIcon.innerHTML = fs.readFileSync(__dirname + '/image/soundcloud.svg', 'utf8');
-		scResolve(this.token, src, (err, json, streamUrl) => {
-			if (err) return console.error(err);
-			console.log(json);
+		scResolve(this.token.soundcloud || this.token, src, (err, json, streamUrl) => {
+			if (err) {
+				cb(err, streamUrl);
+				return;
+			}
+
+			this.sourceIcon.innerHTML = fs.readFileSync(__dirname + '/image/soundcloud.svg', 'utf8');
+
 			this.sourceText.innerHTML = `
 				<a class="source-link" href="${json.permalink_url}" target="_blank">${json.title}</a>
 			`;
@@ -119,13 +196,19 @@ StartApp.prototype.setSource = function (src) {
 				<a class="source-link" href="${json.user.permalink_url}" target="_blank">${json.user.username}</a>
 				`;
 			}
+
+			cb(err, streamUrl);
 		});
 	}
 	else if (url.hostname === 'youtube') {
 
 	}
+	//error
 	else {
-
+		cb(new Error('Bad url'), '');
+		return this;
 	}
+
+	return this;
 };
 

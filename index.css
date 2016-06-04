@@ -21,6 +21,10 @@ a {
 	color: inherit;
 }
 
+[hidden] {
+	display: none!important;
+}
+
 :host:after {
 	content: '';
 }
@@ -64,22 +68,53 @@ a {
 	padding: 0;
 	position: absolute;
 	top: .5rem;
-	left: .5rem;
-	border: 0;
+	left: .75rem;
 	display: block;
 	line-height: 2rem;
 	font-size: 1rem;
-	border-bottom: 0.3rem solid;
 	max-width: 100%;
 	border: none;
 	box-shadow: none;
 	outline: none;
-	border-bottom: .2rem solid transparend;
+}
+.source-input {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	display: inline-block;
+	vertical-align: middle;
+	line-height: 1rem;
+	font-size: 1rem;
+	max-width: 100%;
+	border: none;
+	box-shadow: none;
+	font-weight: bolder;
+	outline: none;
+	background: none;
+	box-shadow: 0 2px;
 }
 .source-input:focus{
-	box-shadow: none;
 	outline: none;
-	border-bottom-color: black;
+}
+.source-input-file {
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+	opacity: 0;
+	border: none;
+	cursor: pointer;
+}
+.source-input-url {
+    font-family: sans-serif;
+    font-weight: bold;
+}
+.source-input-url:focus {
+}
+input[type=file],
+input[type=file]::-webkit-file-upload-button {
+    cursor: pointer;
 }
 .source-icon {
 	width: 1.5rem;
@@ -88,11 +123,12 @@ a {
 	position: relative;
 }
 .source-icon svg {
-	margin-bottom: -.45rem;
+	margin-bottom: -.5rem;
 	max-width: 100%;
 	max-height: 100%;
 }
 .source-link {
+	position: relative;
 	font-weight: bold;
     text-decoration: none;
     display: inline-block;
@@ -102,5 +138,6 @@ a {
     vertical-align: middle;
     text-overflow: ellipsis;
     max-width: 50vw;
-    border-bottom: 1px solid;
+    box-shadow: 0px 2px 0 0;
+	cursor: pointer;
 }

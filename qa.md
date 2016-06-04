@@ -18,3 +18,18 @@
 
 * allows for max self-expression
 * I would expect it to play some default song (per-project), until it is changed by user
+
+## Q: how do we receive audio, how do we send it to output?
+
+1. HTMLAudioElement (Audio)
+	+ extendive API, inc start, stop, mute
+2. AudioBufferSource
+	+ low-level control over the data
+	+ possible to insert any type of raw data
+* what if I need no use WebAudioAPI, just simple streams?
+	* use web-audio-to-stream converter
+3. Let user himself init the way to stream data to audio.
+	+ let him use audio-source for stream
+	+ let him use url for audio node
+	- how do we manage raw data?
+		+ by passing him an url of source.
