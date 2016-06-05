@@ -45,26 +45,26 @@ createDemo({
 	//container to use as a start-app demo
 	container: el,
 
-	//default color for all startapp elements
-	color: 'black',
-
 	//default source sound (url) to play
-	source: '',
+	source: null,
 
-	//API token (for soundcloud, youtube etc.) or object {soundcloud: ..., youtube: ...}
-	token: null,
+	//API token (for soundcloud, youtube etc.)
+	token: {soundcloud, youtube},
 
-	//allow for dropping files from browser to source
+	//allow dropping files to browser
 	dragAndDrop: true,
 
 	//open last user settings from last session: song, time
 	saveState: true,
 
+	//enable open file dialog
+	file: true,
+
+	//enable load url input
+	url: true,
+
 	//enable microphone input
 	mic: false,
-
-	//enable midi input
-	midi: false,
 
 	//start song as only as ready
 	autoplay: true,
@@ -72,17 +72,20 @@ createDemo({
 	//repeat played track or stop at the end
 	repeat: true,
 
-	//show fps stats
-	fps: true,
-
 	//show played time
 	time: true,
 
 	//show play button close to the source
 	playPause: true,
 
+	//default color for all elements
+	color: 'black',
+
 	//set of icons to use for source input component (svg components)
 	icons: {open, record, mic},
+
+	//show fps stats
+	fps: true,
 
 //	fileUpload: true,
 //	urlUpload: true,

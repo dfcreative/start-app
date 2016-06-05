@@ -37,21 +37,22 @@ function StartApp (opts, cb) {
 	`;
 	this.sourceIcon = this.sourceEl.querySelector('.source-icon');
 	this.sourceText = this.sourceEl.querySelector('.source-text');
-	this.sourceIcon.innerHTML = fs.readFileSync(__dirname + '/image/open.svg', 'utf8');
+	this.sourceIcon.innerHTML = this.icons.open;
 	if (!this.source) {
 		this.sourceText.innerHTML = `
 			<span class="source-links">
-				<a href="#open-file" class="source-link">
+				<a href="#open-file" ${this.file ? '' : 'hidden'} class="source-link">
 					Open file
 					<input class="source-input source-input-file" type="file"/>
 				</a>
-				or
-				<a href="#enter-url" class="source-link source-link-url">
+				${this.file && this.url ? 'or' : '' }
+				<a href="#enter-url" ${this.url ? '' : 'hidden'} class="source-link source-link-url">
 					enter URL
 				</a>
 			</span>
-			<input hidden placeholder="http://url.to/file.ogg" class="source-input source-input-url" type="url"/>
+			<input hidden placeholder="http://url.to/audio" class="source-input source-input-url" type="url"/>
 			<strong class="source-title"></strong>
+			<a href="#enable-mic" ${this.mic ? '' : 'hidden'}><i class="source-icon">${this.icons.mic}</i></a>
 		`;
 		this.sourceTitle = this.sourceEl.querySelector('.source-title');
 		this.sourceLinks = this.sourceEl.querySelector('.source-links');
@@ -67,7 +68,7 @@ function StartApp (opts, cb) {
 		this.sourceInputURL.addEventListener('change', (e) => {
 			e.preventDefault();
 			this.hideInput();
-			this.sourceIcon.innerHTML = fs.readFileSync(__dirname + '/image/loading.svg', 'utf8');
+			this.sourceIcon.innerHTML = this.icons.loading;
 			this.sourceTitle.innerHTML = `loading`;
 			this.setSource(this.sourceInputURL.value, (err) => {
 				//in case of error allow second chance
@@ -75,7 +76,7 @@ function StartApp (opts, cb) {
 					this.hideInput();
 					this.sourceTitle.innerHTML = ``;
 					this.sourceInputURL.removeAttribute('hidden');
-					this.sourceIcon.innerHTML = fs.readFileSync(__dirname + '/image/url.svg', 'utf8');
+					this.sourceIcon.innerHTML = this.icons.url;
 				}
 			});
 		});
@@ -84,7 +85,7 @@ function StartApp (opts, cb) {
 			this.hideInput();
 			this.sourceInputURL.removeAttribute('hidden');
 			this.sourceInputURL.focus();
-			this.sourceIcon.innerHTML = fs.readFileSync(__dirname + '/image/url.svg', 'utf8');
+			this.sourceIcon.innerHTML = this.icons.url;
 		});
 	}
 
@@ -99,6 +100,15 @@ inherits(StartApp, Emitter);
 //Allow dropping files to browser
 StartApp.prototype.dragAndDrop = true;
 
+//Enable file select
+StartApp.prototype.file = true;
+
+//Enable url select
+StartApp.prototype.url = true;
+
+//Enable mic input
+StartApp.prototype.mic = false;
+
 //Default (my) soundcloud API token
 StartApp.prototype.token = {
 	soundcloud: '6b7ae5b9df6a0eb3fcca34cc3bb0ef14',
@@ -108,6 +118,16 @@ StartApp.prototype.token = {
 //display micro fps counter
 StartApp.prototype.fps = true;
 
+//icon paths
+StartApp.prototype.icons = {
+	record: fs.readFileSync(__dirname + '/image/record.svg', 'utf8'),
+	error: fs.readFileSync(__dirname + '/image/error.svg', 'utf8'),
+	soundcloud: fs.readFileSync(__dirname + '/image/soundcloud.svg', 'utf8'),
+	open: fs.readFileSync(__dirname + '/image/open.svg', 'utf8'),
+	loading: fs.readFileSync(__dirname + '/image/loading.svg', 'utf8'),
+	url: fs.readFileSync(__dirname + '/image/url.svg', 'utf8'),
+	mic: fs.readFileSync(__dirname + '/image/mic.svg', 'utf8')
+};
 
 /**
  * Init settings
@@ -117,10 +137,18 @@ StartApp.prototype.init = function (opts) {
 		this.container.addEventListener('dragenter', (e) => {
 			this.container.classList.add('dragover');
 			e.dataTransfer.dropEffect = 'copy';
+
+			var dt = e.dataTransfer;
+			var list = dt.files, src;
+
+			this.hideInput();
+			this.sourceTitle.innerHTML = `drop audio file`;
+			this.sourceIcon.innerHTML = this.icons.record;
 		});
 
 		this.container.addEventListener('dragleave', (e) => {
 			this.container.classList.remove('dragover');
+			this.showInput();
 		});
 
 		this.container.addEventListener('drop', (e) => {
@@ -214,7 +242,7 @@ StartApp.prototype.setSource = function (src, cb) {
 
 		if (!src) {
 			this.sourceTitle.innerHTML = `not an audio`;
-			this.sourceIcon.innerHTML = fs.readFileSync(__dirname + '/image/error.svg', 'utf8');
+			this.sourceIcon.innerHTML = this.icons.error;
 			setTimeout(() => {
 				this.showInput();
 				cb && cb(new Error('Not an audio'));
@@ -226,7 +254,7 @@ StartApp.prototype.setSource = function (src, cb) {
 	//File instance case
 	if (src instanceof File) {
 		var url = URL.createObjectURL(src);
-		this.sourceIcon.innerHTML = fs.readFileSync(__dirname + '/image/record.svg', 'utf8');
+		this.sourceIcon.innerHTML = this.icons.record;
 		this.sourceTitle.innerHTML = src.name;
 
 		cb && cb(null, url);
@@ -247,7 +275,7 @@ StartApp.prototype.setSource = function (src, cb) {
 				return;
 			}
 
-			this.sourceIcon.innerHTML = fs.readFileSync(__dirname + '/image/soundcloud.svg', 'utf8');
+			this.sourceIcon.innerHTML = this.icons.soundcloud;
 
 			this.sourceText.innerHTML = `
 				<a class="source-link" href="${json.permalink_url}" target="_blank">${json.title}</a>
@@ -267,7 +295,7 @@ StartApp.prototype.setSource = function (src, cb) {
 	//error
 	else {
 		this.sourceTitle.innerHTML = `bad URL`;
-		this.sourceIcon.innerHTML = fs.readFileSync(__dirname + '/image/error.svg', 'utf8');
+		this.sourceIcon.innerHTML = this.icons.error;
 		setTimeout(() => {
 			cb && cb('Bad url');
 		}, 1000);
@@ -283,7 +311,7 @@ StartApp.prototype.setSource = function (src, cb) {
 StartApp.prototype.showInput = function () {
 	this.sourceLinks.removeAttribute('hidden');
 	this.sourceInputURL.setAttribute('hidden', true);
-	this.sourceIcon.innerHTML = fs.readFileSync(__dirname + '/image/open.svg', 'utf8');
+	this.sourceIcon.innerHTML = this.icons.open;
 	this.sourceTitle.innerHTML = '';
 
 	return this;

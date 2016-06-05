@@ -4,6 +4,7 @@ var waveform = require('./waveform');
 
 createDemo({
 	source: null,
+	url: true,
 	// fullscreen: true,
 	// microphone: true,
 	// autostart: true,
