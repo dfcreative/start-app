@@ -37,60 +37,67 @@ function StartApp (opts, cb) {
 	`;
 	this.sourceIcon = this.sourceEl.querySelector('.source-icon');
 	this.sourceText = this.sourceEl.querySelector('.source-text');
-	this.sourceIcon.innerHTML = this.icons.open;
-	if (!this.source) {
-		this.sourceText.innerHTML = `
-			<span class="source-links">
-				<a href="#open-file" ${this.file ? '' : 'hidden'} class="source-link">
-					Open file
-					<input class="source-input source-input-file" type="file"/>
-				</a>
-				${this.file && this.url ? 'or' : '' }
-				<a href="#enter-url" ${this.url ? '' : 'hidden'} class="source-link source-link-url">
-					enter URL
-				</a>
-			</span>
-			<input hidden placeholder="http://url.to/audio" class="source-input source-input-url" type="url"/>
-			<strong class="source-title"></strong>
-			<a href="#enable-mic" ${this.mic ? '' : 'hidden'}><i class="source-icon">${this.icons.mic}</i></a>
-		`;
-		this.sourceTitle = this.sourceEl.querySelector('.source-title');
-		this.sourceLinks = this.sourceEl.querySelector('.source-links');
-		this.sourceInputFile = this.sourceEl.querySelector('.source-input-file');
-		this.sourceInputFile.addEventListener('change', (e) => {
-			if (!this.sourceInputFile.files.length) return this;
-			this.setSource(this.sourceInputFile.files);
+	this.sourceIcon.innerHTML = this.file ? this.icons.open : this.url ? this.icons.url : this.mic ? this.icons.mic : this.icons.open;
+
+	this.sourceText.innerHTML = `
+		<span class="source-links">
+			<a href="#open-file" ${this.file ? '' : 'hidden'} class="source-link">
+				open file
+				<input class="source-input source-input-file" type="file"/>
+			</a>${this.file && this.url && this.mic ? ',' : this.file && (this.url || this.mic) ? ' or' : '' }
+			<a href="#enter-url" ${this.url ? '' : 'hidden'} class="source-link source-link-url">
+				enter URL
+			</a>${this.url && this.mic ? ' or' : ''}
+			<a href="#enable-mic" ${this.mic ? '' : 'hidden'} class="source-link source-link-mic">
+				enable microphone
+			</a>
+		</span>
+		<input hidden placeholder="http://url.to/audio" class="source-input source-input-url" type="url" value="${this.source || ''}"/>
+		<strong class="source-title"></strong>
+	`;
+	this.sourceTitle = this.sourceEl.querySelector('.source-title');
+	this.sourceLinks = this.sourceEl.querySelector('.source-links');
+	this.sourceInputFile = this.sourceEl.querySelector('.source-input-file');
+	this.sourceInputFile.addEventListener('change', (e) => {
+		if (!this.sourceInputFile.files.length) return this;
+		this.setSource(this.sourceInputFile.files);
+	});
+	this.sourceInputURL = this.sourceEl.querySelector('.source-input-url');
+	this.sourceInputURL.addEventListener('blur', (e) => {
+		this.showInput();
+	});
+	this.sourceInputURL.addEventListener('change', (e) => {
+		e.preventDefault();
+		this.hideInput();
+		this.sourceIcon.innerHTML = this.icons.loading;
+		this.sourceTitle.innerHTML = `loading`;
+		this.setSource(this.sourceInputURL.value, (err) => {
+			//in case of error allow second chance
+			if (err) {
+				this.hideInput();
+				this.sourceTitle.innerHTML = ``;
+				this.sourceInputURL.removeAttribute('hidden');
+				this.sourceIcon.innerHTML = this.icons.url;
+			}
 		});
-		this.sourceInputURL = this.sourceEl.querySelector('.source-input-url');
-		this.sourceInputURL.addEventListener('blur', (e) => {
-			this.showInput();
-		});
-		this.sourceInputURL.addEventListener('change', (e) => {
-			e.preventDefault();
-			this.hideInput();
-			this.sourceIcon.innerHTML = this.icons.loading;
-			this.sourceTitle.innerHTML = `loading`;
-			this.setSource(this.sourceInputURL.value, (err) => {
-				//in case of error allow second chance
-				if (err) {
-					this.hideInput();
-					this.sourceTitle.innerHTML = ``;
-					this.sourceInputURL.removeAttribute('hidden');
-					this.sourceIcon.innerHTML = this.icons.url;
-				}
-			});
-		});
-		this.sourceEl.querySelector('.source-link-url').addEventListener('click', (e) => {
-			e.preventDefault();
-			this.hideInput();
-			this.sourceInputURL.removeAttribute('hidden');
-			this.sourceInputURL.focus();
-			this.sourceIcon.innerHTML = this.icons.url;
-		});
-	}
+	});
+	this.sourceEl.querySelector('.source-link-url').addEventListener('click', (e) => {
+		e.preventDefault();
+		this.hideInput();
+		this.sourceInputURL.removeAttribute('hidden');
+		this.sourceInputURL.focus();
+		this.sourceIcon.innerHTML = this.icons.url;
+	});
+	this.sourceInputMic = this.sourceEl.querySelector('.source-link-mic');
+	this.sourceInputMic.addEventListener('click', (e) => {
+		e.preventDefault();
+		// this.showInput();
+	});
 
 	//place to container
 	this.container.appendChild(this.sourceEl);
+
+	setTimeout(() => cb && cb(null, this.source));
 
 	this.init(this);
 }
@@ -187,6 +194,7 @@ StartApp.prototype.init = function (opts) {
 		var values = Array(len).fill(0);
 		var updatePeriod = 1000;
 		var maxFPS = 100;
+
 		raf(function measure () {
 			count++;
 			var t = now();
@@ -214,7 +222,9 @@ StartApp.prototype.init = function (opts) {
 
 	}
 
-	this.setSource(opts.source);
+	this.setSource(opts.source, (err) => {
+		if (err) this.showInput();
+	});
 };
 
 
@@ -244,7 +254,7 @@ StartApp.prototype.setSource = function (src, cb) {
 			this.sourceTitle.innerHTML = `not an audio`;
 			this.sourceIcon.innerHTML = this.icons.error;
 			setTimeout(() => {
-				this.showInput();
+				if (!this.source) this.showInput();
 				cb && cb(new Error('Not an audio'));
 			}, 1000);
 			return this;
@@ -257,6 +267,9 @@ StartApp.prototype.setSource = function (src, cb) {
 		this.sourceIcon.innerHTML = this.icons.record;
 		this.sourceTitle.innerHTML = src.name;
 
+		this.source = url;
+
+		this.emit('source', url);
 		cb && cb(null, url);
 
 		return this;
@@ -286,6 +299,9 @@ StartApp.prototype.setSource = function (src, cb) {
 				`;
 			}
 
+			this.source = streamUrl;
+
+			this.emit('source', streamUrl);
 			cb && cb(err, streamUrl);
 		});
 	}
@@ -311,7 +327,7 @@ StartApp.prototype.setSource = function (src, cb) {
 StartApp.prototype.showInput = function () {
 	this.sourceLinks.removeAttribute('hidden');
 	this.sourceInputURL.setAttribute('hidden', true);
-	this.sourceIcon.innerHTML = this.icons.open;
+	this.sourceIcon.innerHTML = this.file ? this.icons.open : this.url ? this.icons.url : this.mic ? this.icons.mic : this.icons.open;
 	this.sourceTitle.innerHTML = '';
 
 	return this;

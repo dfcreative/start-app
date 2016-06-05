@@ -28,9 +28,14 @@
 	+ possible to insert any type of raw data
 * what if I need no use WebAudioAPI, just simple streams?
 	* use web-audio-to-stream converter
-3. Let user himself init the way to stream data to audio.
+3. Let user himself init the way to stream data to audio, provide him url
 	+ let him use audio-source for stream
 	+ let him use url for audio node
 	- how do we manage raw data?
-		+ by passing him an url of source.
+		+ by passing him an url of source as blob
+	- how do we manage mic? Anyways we have to mix data.
+		+ seems that we can create stream url as `navigator.getMedia({audio: true}, stream => var url = URL.createObjectURL(stream);`
+	- in that case we avoid mixing. Microphone becomes an alternate to file or url.
+		+ mixing can be done separately, but anyways
+	+ not every browser and app have Web-Audio-API, some may want to use ajax with pure streams for example
 * As far as we have to have a play/pause of input stream, therefore we have to use audio element to do that.
