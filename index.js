@@ -55,31 +55,31 @@ function StartApp (opts, cb) {
 		this.sourceLinks = this.sourceEl.querySelector('.source-links');
 		this.sourceInputFile = this.sourceEl.querySelector('.source-input-file');
 		this.sourceInputFile.addEventListener('change', (e) => {
+			if (!this.sourceInputFile.files.length) return this;
 			this.setSource(this.sourceInputFile.files);
 		});
 		this.sourceInputURL = this.sourceEl.querySelector('.source-input-url');
 		this.sourceInputURL.addEventListener('blur', (e) => {
-			this.sourceLinks.removeAttribute('hidden');
-			this.sourceInputURL.setAttribute('hidden', true);
-			this.sourceIcon.innerHTML = fs.readFileSync(__dirname + '/image/open.svg', 'utf8');
+			this.showInput();
 		});
 		this.sourceInputURL.addEventListener('change', (e) => {
 			e.preventDefault();
-			this.sourceInputURL.blur();
-			this.sourceLinks.setAttribute('hidden', true);
+			this.hideInput();
 			this.sourceIcon.innerHTML = fs.readFileSync(__dirname + '/image/loading.svg', 'utf8');
 			this.sourceTitle.innerHTML = `loading`;
 			this.setSource(this.sourceInputURL.value, (err) => {
+				//in case of error allow second chance
 				if (err) {
-					this.sourceLinks.removeAttribute('hidden');
-					this.sourceIcon.innerHTML = fs.readFileSync(__dirname + '/image/open.svg', 'utf8');
-					this.sourceInputURL.value = '';
+					this.hideInput();
+					this.sourceTitle.innerHTML = ``;
+					this.sourceInputURL.removeAttribute('hidden');
+					this.sourceIcon.innerHTML = fs.readFileSync(__dirname + '/image/url.svg', 'utf8');
 				}
 			});
 		});
 		this.sourceEl.querySelector('.source-link-url').addEventListener('click', (e) => {
 			e.preventDefault();
-			this.sourceEl.querySelector('.source-links').setAttribute('hidden', true);
+			this.hideInput();
 			this.sourceInputURL.removeAttribute('hidden');
 			this.sourceInputURL.focus();
 			this.sourceIcon.innerHTML = fs.readFileSync(__dirname + '/image/url.svg', 'utf8');
@@ -119,8 +119,6 @@ StartApp.prototype.init = function (opts) {
  * Manage container drag-n-drop
  */
 StartApp.prototype.initDragAndDrop = function () {
-	this.container.setAttribute('draggable', true);
-
 	this.container.addEventListener('dragenter', (e) => {
 		this.container.classList.add('dragover');
 		e.dataTransfer.dropEffect = 'copy';
@@ -152,14 +150,28 @@ StartApp.prototype.setSource = function (src, cb) {
 	if (!src) {
 		return this;
 	}
+	this.hideInput();
 
 	//find first audio file from the list
 	if (src instanceof FileList) {
-		for (var i = 0; i < src.length; i++) {
-			if (/audio/.test(src[i].type)) {
-				src = src[i];
+		var list = src;
+		src = null;
+
+		for (var i = 0; i < list.length; i++) {
+			if (/audio/.test(list[i].type)) {
+				src = list[i];
 				break;
 			}
+		}
+
+		if (!src) {
+			this.sourceTitle.innerHTML = `not an audio`;
+			this.sourceIcon.innerHTML = fs.readFileSync(__dirname + '/image/error.svg', 'utf8');
+			setTimeout(() => {
+				this.showInput();
+				cb && cb(new Error('Not an audio'));
+			}, 1000);
+			return this;
 		}
 	}
 
@@ -168,7 +180,8 @@ StartApp.prototype.setSource = function (src, cb) {
 		var url = URL.createObjectURL(src);
 		this.sourceIcon.innerHTML = fs.readFileSync(__dirname + '/image/record.svg', 'utf8');
 		this.sourceTitle.innerHTML = src.name;
-		cb(null, url);
+
+		cb && cb(null, url);
 
 		return this;
 	}
@@ -182,7 +195,7 @@ StartApp.prototype.setSource = function (src, cb) {
 	if (url.hostname === 'soundcloud.com') {
 		scResolve(this.token.soundcloud || this.token, src, (err, json, streamUrl) => {
 			if (err) {
-				cb(err, streamUrl);
+				cb && cb(err, streamUrl);
 				return;
 			}
 
@@ -197,7 +210,7 @@ StartApp.prototype.setSource = function (src, cb) {
 				`;
 			}
 
-			cb(err, streamUrl);
+			cb && cb(err, streamUrl);
 		});
 	}
 	else if (url.hostname === 'youtube') {
@@ -205,10 +218,31 @@ StartApp.prototype.setSource = function (src, cb) {
 	}
 	//error
 	else {
-		cb(new Error('Bad url'), '');
+		this.sourceTitle.innerHTML = `bad URL`;
+		this.sourceIcon.innerHTML = fs.readFileSync(__dirname + '/image/error.svg', 'utf8');
+		setTimeout(() => {
+			cb && cb('Bad url');
+		}, 1000);
 		return this;
 	}
 
 	return this;
 };
 
+/**
+ * Show/hide source input default view
+ */
+StartApp.prototype.showInput = function () {
+	this.sourceLinks.removeAttribute('hidden');
+	this.sourceInputURL.setAttribute('hidden', true);
+	this.sourceIcon.innerHTML = fs.readFileSync(__dirname + '/image/open.svg', 'utf8');
+	this.sourceTitle.innerHTML = '';
+
+	return this;
+}
+
+StartApp.prototype.hideInput = function () {
+	this.sourceLinks.setAttribute('hidden', true);
+
+	return this;
+};
