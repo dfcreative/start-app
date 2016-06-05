@@ -12,6 +12,8 @@ var scResolve = require('soundcloud-resolve');
 var fs = require('fs');
 var raf = require('raf');
 var now = require('right-now');
+var colorParse = require('color-parse');
+var hsl = require('color-space/hsl');
 
 module.exports = StartApp;
 
@@ -28,9 +30,16 @@ function StartApp (opts, cb) {
 	if (!this.container) this.container = document.body || document.documentElement;
 	this.container.classList.add(className);
 
-	//create file/url input area
+	//create container
 	this.sourceEl = document.createElement('div');
 	this.sourceEl.classList.add('source');
+	this.container.appendChild(this.sourceEl);
+
+	//create dynamic style
+	this.styleEl = document.createElement('style');
+	(document.head || document.documentElement).appendChild(this.styleEl);
+
+	//create layout
 	this.sourceEl.innerHTML = `
 		<i class="source-icon"></i>
 		<span class="source-text"></span>
@@ -41,23 +50,24 @@ function StartApp (opts, cb) {
 
 	this.sourceText.innerHTML = `
 		<span class="source-links">
-			<a href="#open-file" ${this.file ? '' : 'hidden'} class="source-link">
-				open file
-				<input class="source-input source-input-file" type="file"/>
-			</a>${this.file && this.url && this.mic ? ',' : this.file && (this.url || this.mic) ? ' or' : '' }
-			<a href="#enter-url" ${this.url ? '' : 'hidden'} class="source-link source-link-url">
-				enter URL
-			</a>${this.url && this.mic ? ' or' : ''}
+			<a href="#open-file" ${this.file ? '' : 'hidden'} class="source-link source-link-file">open file</a>${this.file && this.url && this.mic ? ',' : this.file && (this.url || this.mic) ? ' or' : '' }
+			<a href="#enter-url" ${this.url ? '' : 'hidden'} class="source-link source-link-url">enter URL</a>
+			${this.url && this.mic ? ' or' : ''}
 			<a href="#enable-mic" ${this.mic ? '' : 'hidden'} class="source-link source-link-mic">
 				enable microphone
 			</a>
 		</span>
-		<input hidden placeholder="http://url.to/audio" class="source-input source-input-url" type="url" value="${this.source || ''}"/>
+		<input class="source-input source-input-file" hidden type="file"/>
+		<input placeholder="http://url.to/audio" hidden class="source-input source-input-url" type="url" value="${this.source || ''}"/>
 		<strong class="source-title"></strong>
 	`;
 	this.sourceTitle = this.sourceEl.querySelector('.source-title');
 	this.sourceLinks = this.sourceEl.querySelector('.source-links');
 	this.sourceInputFile = this.sourceEl.querySelector('.source-input-file');
+	this.sourceEl.querySelector('.source-link-file').addEventListener('click', (e) => {
+		e.preventDefault();
+		this.sourceInputFile.click();
+	});
 	this.sourceInputFile.addEventListener('change', (e) => {
 		if (!this.sourceInputFile.files.length) return this;
 		this.setSource(this.sourceInputFile.files);
@@ -94,12 +104,60 @@ function StartApp (opts, cb) {
 		// this.showInput();
 	});
 
-	//place to container
-	this.container.appendChild(this.sourceEl);
 
+	//init fps
+	this.fpsEl = document.createElement('div');
+	this.fpsEl.classList.add('fps');
+	this.fpsEl.setAttribute('hidden', true);
+	this.fpsEl.innerHTML = `
+		<canvas class="fps-canvas"></canvas>
+		<span class="fps-text">
+			fps <span class="fps-value">60.0</span>
+		</span>
+	`;
+	this.fpsCanvas = this.fpsEl.querySelector('.fps-canvas');
+	var fpsValue = this.fpsValue = this.fpsEl.querySelector('.fps-value');
+	this.container.appendChild(this.fpsEl);
+
+	var w = this.fpsCanvas.width = parseInt(getComputedStyle(this.fpsCanvas).width) || 1;
+	var h = this.fpsCanvas.height = parseInt(getComputedStyle(this.fpsCanvas).height) || 1;
+
+	var ctx = this.fpsCanvas.getContext('2d');
+	var count = 0;
+	var last = 0;
+	var len = this.fpsCanvas.width;
+	var values = Array(len).fill(0);
+	var updatePeriod = 1000;
+	var maxFPS = 100;
+	var that = this;
+
+	raf(function measure () {
+		count++;
+		var t = now();
+		if (t - last> updatePeriod) {
+			var color = that.color;
+			var transparentColor = that.transparentColor;
+			last = t;
+			values.push((count - 1) / (maxFPS * updatePeriod * 0.001));
+			values = values.slice(-len);
+			count = 0;
+
+			ctx.clearRect(0, 0, w, h);
+			ctx.fillStyle = color;
+			for (var i = 0; i < len; i++) {
+				ctx.fillRect(i, h - h * values[i], 1, h * values[i]);
+			}
+
+			fpsValue.innerHTML = (values[values.length - 1]*maxFPS).toFixed(1);
+		}
+		raf(measure);
+	});
+
+
+	//bind start call
 	setTimeout(() => cb && cb(null, this.source));
 
-	this.init(this);
+	this.update();
 }
 
 inherits(StartApp, Emitter);
@@ -139,9 +197,65 @@ StartApp.prototype.icons = {
 /**
  * Init settings
  */
-StartApp.prototype.init = function (opts) {
-	if (opts.dragAndDrop) {
+StartApp.prototype.update = function (opts) {
+	extend(this, opts);
+
+	if (this.color) {
+		var parsed = colorParse(this.color);
+		if (parsed.space === 'hsl') {
+			var values = hsl.rgb(parsed.values);
+		}
+		else {
+			var values = parsed.values;
+		}
+		this.inverseColor = `rgba(${values.map((v) => 255 - v).join(', ')}, ${parsed.alpha})`;
+		values.push(parsed.alpha * 0.25);
+		this.semiTransparentColor = `rgba(${values.join(', ')})`;
+		values[3] = parsed.alpha * 0.1;
+		this.transparentColor = `rgba(${values.join(', ')})`;
+		this.styleEl.innerHTML = `
+			.${className} {
+				color: ${this.color};
+			}
+			.${className} .source-input,
+			.${className} .source-link
+			{
+				box-shadow: 0 2px ${this.semiTransparentColor};
+			}
+			.${className} .source-input:focus,
+			.${className} .source-link:hover
+			{
+				box-shadow: 0 2px ${this.color};
+			}
+
+			::selection{
+				background: ${this.semiTransparentColor};
+				color: ${this.inverseColor};
+			}
+			::-moz-selection{
+				background: ${this.semiTransparentColor};
+				color: ${this.inverseColor};
+			}
+
+			.${className} .fps-canvas { background:${this.transparentColor}; }
+
+			::-moz-placeholder { color:${this.semiTransparentColor}; }
+			input:-moz-placeholder { color:${this.semiTransparentColor}; }
+			:-ms-input-placeholder { color:${this.semiTransparentColor}; }
+			::-webkit-input-placeholder { color:${this.semiTransparentColor}; }
+		`;
+	}
+
+	if (this.dragAndDrop) {
+		var target;
+		this.container.addEventListener('dragstart', (e) => {
+			if (e.target != this.container) {
+				e.preventDefault();
+				return false;
+			}
+		});
 		this.container.addEventListener('dragenter', (e) => {
+			target = e.target;
 			this.container.classList.add('dragover');
 			e.dataTransfer.dropEffect = 'copy';
 
@@ -151,12 +265,13 @@ StartApp.prototype.init = function (opts) {
 			this.hideInput();
 			this.sourceTitle.innerHTML = `drop audio file`;
 			this.sourceIcon.innerHTML = this.icons.record;
-		});
+		}, false);
 
 		this.container.addEventListener('dragleave', (e) => {
+			if (e.target !== target) return;
 			this.container.classList.remove('dragover');
 			this.showInput();
-		});
+		}, false);
 
 		this.container.addEventListener('drop', (e) => {
 			e.preventDefault();
@@ -164,65 +279,25 @@ StartApp.prototype.init = function (opts) {
 
 			var dt = e.dataTransfer;
 			this.setSource(dt.files);
-		});
+		}, false);
 
 		this.container.addEventListener('dragover', (e) => {
 			e.preventDefault();
 		}, false);
 	}
 
-	if (opts.fps) {
-		this.fpsEl = document.createElement('div');
-		this.fpsEl.classList.add('fps');
-		this.fpsEl.innerHTML = `
-			<canvas class="fps-canvas"></canvas>
-			<span class="fps-text">
-				fps <span class="fps-value">60.0</span>
-			</span>
-		`;
-		this.fpsCanvas = this.fpsEl.querySelector('.fps-canvas');
-		var fpsValue = this.fpsValue = this.fpsEl.querySelector('.fps-value');
-		this.container.appendChild(this.fpsEl);
-
-		var w = this.fpsCanvas.width = parseInt(getComputedStyle(this.fpsCanvas).width) || 1;
-		var h = this.fpsCanvas.height = parseInt(getComputedStyle(this.fpsCanvas).height) || 1;
-
-		var ctx = this.fpsCanvas.getContext('2d');
-		var count = 0;
-		var last = 0;
-		var len = this.fpsCanvas.width;
-		var values = Array(len).fill(0);
-		var updatePeriod = 1000;
-		var maxFPS = 100;
-
-		raf(function measure () {
-			count++;
-			var t = now();
-			if (t - last> updatePeriod) {
-				last = t;
-				values.push((count - 1) / (maxFPS * updatePeriod * 0.001));
-				values = values.slice(-len);
-				count = 0;
-
-				ctx.clearRect(0, 0, w, h);
-				ctx.fillStyle = `rgba(0,0,0,.1)`;
-				ctx.fillRect(0, 0, w, h);
-				ctx.fillStyle = `rgba(0,0,0,1)`;
-				for (var i = 0; i < len; i++) {
-					ctx.fillRect(i, h - h * values[i], 1, h * values[i]);
-				}
-
-				fpsValue.innerHTML = (values[values.length - 1]*maxFPS).toFixed(1);
-			}
-			raf(measure);
-		});
+	if (this.fps) {
+		this.fpsEl.removeAttribute('hidden');
+	}
+	else {
+		this.fpsEl.setAttribute('hidden', true);
 	}
 
-	if (opts.time) {
+	if (this.time) {
 
 	}
 
-	this.setSource(opts.source, (err) => {
+	this.setSource(this.source, (err) => {
 		if (err) this.showInput();
 	});
 };

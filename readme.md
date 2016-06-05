@@ -98,7 +98,9 @@ createDemo({
 //	navigation: false
 }, function ready () {
 	//called as only as app is ready
-}).on('change', function () {
-	//update components
 });
+
+
+//call to update color etc.
+app.update(opts);
 ```

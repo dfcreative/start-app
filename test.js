@@ -2,11 +2,12 @@ var createDemo = require('./');
 var raf = require('raf');
 
 
-createDemo({
+var demo = createDemo({
 	// source: 'xxx',
 	url: true,
 	file: true,
 	mic: false,
+	color: 'grey',
 	// fullscreen: true,
 	// microphone: true,
 	// autostart: true,
@@ -22,7 +23,6 @@ createDemo({
 		raf(draw)
 	});
 });
-
 
 
 //waveform painter helper, expected to be user’s component

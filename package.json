@@ -33,8 +33,10 @@
   },
   "dependencies": {
     "audio-context": "^0.1.0",
-    "bubleify": "^0.3.0",
     "brfs": "^1.4.3",
+    "bubleify": "^0.3.0",
+    "color-parse": "^1.1.0",
+    "color-space": "^1.14.3",
     "inherits": "^2.0.1",
     "insert-css": "^0.2.0",
     "raf": "^3.2.0",
