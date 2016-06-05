@@ -33,3 +33,4 @@
 	+ let him use url for audio node
 	- how do we manage raw data?
 		+ by passing him an url of source.
+* As far as we have to have a play/pause of input stream, therefore we have to use audio element to do that.

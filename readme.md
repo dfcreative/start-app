@@ -42,7 +42,11 @@ Create demo page for a component. (WIP)
 var createDemo = require('audio-demo');
 
 createDemo({
+	//container to use as a start-app demo
 	container: el,
+
+	//default color for all startapp elements
+	color: 'black',
 
 	//default source sound (url) to play
 	source: '',
@@ -77,12 +81,11 @@ createDemo({
 	//show play button close to the source
 	playPause: true,
 
-	//icon svg to show close to source (by default - soundcloud/youtube/etc icon used)
-	sourceIcon: null,
+	//set of icons to use for source input component (svg components)
+	icons: {open, record, mic},
 
 //	fileUpload: true,
 //	urlUpload: true,
-//	API: soundcloud, youtube,
 //	forkme: 'repo from package.json',
 //	description: 'from package.json',
 //	title: 'from package.json',

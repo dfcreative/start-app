@@ -10,6 +10,8 @@ var ctx = require('audio-context');
 var URLParser = require('url');
 var scResolve = require('soundcloud-resolve');
 var fs = require('fs');
+var raf = require('raf');
+var now = require('right-now');
 
 module.exports = StartApp;
 
@@ -85,6 +87,8 @@ function StartApp (opts, cb) {
 			this.sourceIcon.innerHTML = fs.readFileSync(__dirname + '/image/url.svg', 'utf8');
 		});
 	}
+
+	//place to container
 	this.container.appendChild(this.sourceEl);
 
 	this.init(this);
@@ -101,45 +105,89 @@ StartApp.prototype.token = {
 	youtube: 'AIzaSyBPxsJRzvSSz_LOpejJhOGPyEzlRxU062M'
 };
 
+//display micro fps counter
+StartApp.prototype.fps = true;
+
 
 /**
  * Init settings
  */
 StartApp.prototype.init = function (opts) {
 	if (opts.dragAndDrop) {
-		this.initDragAndDrop();
+		this.container.addEventListener('dragenter', (e) => {
+			this.container.classList.add('dragover');
+			e.dataTransfer.dropEffect = 'copy';
+		});
+
+		this.container.addEventListener('dragleave', (e) => {
+			this.container.classList.remove('dragover');
+		});
+
+		this.container.addEventListener('drop', (e) => {
+			e.preventDefault();
+			this.container.classList.remove('dragover');
+
+			var dt = e.dataTransfer;
+			this.setSource(dt.files);
+		});
+
+		this.container.addEventListener('dragover', (e) => {
+			e.preventDefault();
+		}, false);
+	}
+
+	if (opts.fps) {
+		this.fpsEl = document.createElement('div');
+		this.fpsEl.classList.add('fps');
+		this.fpsEl.innerHTML = `
+			<canvas class="fps-canvas"></canvas>
+			<span class="fps-text">
+				fps <span class="fps-value">60.0</span>
+			</span>
+		`;
+		this.fpsCanvas = this.fpsEl.querySelector('.fps-canvas');
+		var fpsValue = this.fpsValue = this.fpsEl.querySelector('.fps-value');
+		this.container.appendChild(this.fpsEl);
+
+		var w = this.fpsCanvas.width = parseInt(getComputedStyle(this.fpsCanvas).width) || 1;
+		var h = this.fpsCanvas.height = parseInt(getComputedStyle(this.fpsCanvas).height) || 1;
+
+		var ctx = this.fpsCanvas.getContext('2d');
+		var count = 0;
+		var last = 0;
+		var len = this.fpsCanvas.width;
+		var values = Array(len).fill(0);
+		var updatePeriod = 1000;
+		var maxFPS = 100;
+		raf(function measure () {
+			count++;
+			var t = now();
+			if (t - last> updatePeriod) {
+				last = t;
+				values.push((count - 1) / (maxFPS * updatePeriod * 0.001));
+				values = values.slice(-len);
+				count = 0;
+
+				ctx.clearRect(0, 0, w, h);
+				ctx.fillStyle = `rgba(0,0,0,.1)`;
+				ctx.fillRect(0, 0, w, h);
+				ctx.fillStyle = `rgba(0,0,0,1)`;
+				for (var i = 0; i < len; i++) {
+					ctx.fillRect(i, h - h * values[i], 1, h * values[i]);
+				}
+
+				fpsValue.innerHTML = (values[values.length - 1]*maxFPS).toFixed(1);
+			}
+			raf(measure);
+		});
+	}
+
+	if (opts.time) {
+
 	}
 
 	this.setSource(opts.source);
 };
-
-
-
-/**
- * Manage container drag-n-drop
- */
-StartApp.prototype.initDragAndDrop = function () {
-	this.container.addEventListener('dragenter', (e) => {
-		this.container.classList.add('dragover');
-		e.dataTransfer.dropEffect = 'copy';
-	});
-
-	this.container.addEventListener('dragleave', (e) => {
-		this.container.classList.remove('dragover');
-	});
-
-	this.container.addEventListener('drop', (e) => {
-		e.preventDefault();
-		this.container.classList.remove('dragover');
-
-		var dt = e.dataTransfer;
-		this.setSource(dt.files);
-	});
-
-	this.container.addEventListener('dragover', (e) => {
-		e.preventDefault();
-	}, false);
-}
 
 
 /**
