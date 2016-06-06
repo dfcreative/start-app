@@ -57,3 +57,8 @@ var app = createDemo({
 //call to update color etc.
 app.update(opts);
 ```
+
+## Inspired by
+
+* [tap-to-start](https://github.com/hughsk/tap-to-start)
+* [soundcloud-badge](https://github.com/hughsk/soundcloud-badge)
