@@ -61,7 +61,7 @@ function StartApp (opts, cb) {
 			<i class="tap-to-start-icon">${this.icons.tap}</i>
 		`;
 		this.tapToStartIcon = this.tapToStart.querySelector('.tap-to-start-icon');
-		this.tapToStartIcon.style.background = this.tapColor || this.inverseColor;
+		this.tapToStartIcon.style.background = this.inverseColor;
 		this.tapToStart.style.background = `rgba(${this.colorValues.join(',')}, .92)`;
 		(document.body || document.documentElement).appendChild(this.tapToStart);
 
@@ -304,9 +304,6 @@ StartApp.prototype.icons = {
 //do mobile routines
 StartApp.prototype.mobile = true;
 
-//color of tap
-StartApp.prototype.tapColor = 'white';
-
 
 /**
  * Init settings
@@ -440,6 +437,7 @@ StartApp.prototype.setColor = function (color) {
 		var values = parsed.values;
 	}
 	this.colorValues = values;
+	this.color = `rgba(${values.join(', ')}, ${parsed.alpha})`;
 	this.inverseColor = `rgba(${values.map((v) => 255 - v).join(', ')}, ${parsed.alpha})`;
 	this.transparentColor = `rgba(${values.join(', ')}, 0.1)`
 	this.semiTransparentColor = `rgba(${values.join(', ')}, 0.25)`
