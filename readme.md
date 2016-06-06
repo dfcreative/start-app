@@ -53,9 +53,20 @@ var app = createDemo({
 	progress: true
 });
 
+//set color of fonts, icons, fps etc.
+app.setColor(color);
 
-//call to update color etc.
+//set a new audio source
+app.setSource(url);
+
+//called when new source is set to audio
+app.on('source', (url) => {});
+
+//call to update color, icons, params etc.
 app.update(opts);
+
+//audio node behind app, can be used for audio processing/visualization etc
+audioContext.createMediaElementSource(app.audio);
 ```
 
 ## Inspired by

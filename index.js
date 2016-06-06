@@ -30,8 +30,6 @@ function StartApp (opts, cb) {
 
 	extend(this, opts);
 
-	this.setColor(this.color);
-
 	//ensure container
 	if (!this.container) this.container = document.body || document.documentElement;
 	this.container.classList.add(className);
@@ -44,6 +42,8 @@ function StartApp (opts, cb) {
 	//create dynamic style
 	this.styleEl = document.createElement('style');
 	(document.head || document.documentElement).appendChild(this.styleEl);
+
+	this.setColor(this.color);
 
 	//add mobile metas
 	if (isMobile && this.mobile) {
@@ -305,37 +305,6 @@ StartApp.prototype.update = function (opts) {
 
 	if (this.color) {
 		this.setColor(this.color);
-		this.styleEl.innerHTML = `
-			.${className} {
-				color: ${this.color};
-			}
-			.${className} .source-input,
-			.${className} .source-link
-			{
-				box-shadow: 0 2px ${this.semiTransparentColor};
-			}
-			.${className} .source-input:focus,
-			.${className} .source-link:hover
-			{
-				box-shadow: 0 2px ${this.color};
-			}
-
-			::selection{
-				background: ${this.semiTransparentColor};
-				color: ${this.inverseColor};
-			}
-			::-moz-selection{
-				background: ${this.semiTransparentColor};
-				color: ${this.inverseColor};
-			}
-
-			.${className} .fps-canvas { background:${this.transparentColor}; }
-
-			::-moz-placeholder { color:${this.semiTransparentColor}; }
-			input:-moz-placeholder { color:${this.semiTransparentColor}; }
-			:-ms-input-placeholder { color:${this.semiTransparentColor}; }
-			::-webkit-input-placeholder { color:${this.semiTransparentColor}; }
-		`;
 	}
 
 	if (this.dragAndDrop && !this.isDnD) {
@@ -418,7 +387,7 @@ StartApp.prototype.update = function (opts) {
 
 //inner method for setting color
 StartApp.prototype.setColor = function (color) {
-	color = color || this.color;
+	this.color = color = color || this.color;
 
 	var parsed = colorParse(color);
 
@@ -431,8 +400,40 @@ StartApp.prototype.setColor = function (color) {
 	this.colorValues = values;
 	this.color = `rgba(${values.join(', ')}, ${parsed.alpha})`;
 	this.inverseColor = `rgba(${values.map((v) => 255 - v).join(', ')}, ${parsed.alpha})`;
-	this.transparentColor = `rgba(${values.join(', ')}, 0.1)`
-	this.semiTransparentColor = `rgba(${values.join(', ')}, 0.25)`
+	this.transparentColor = `rgba(${values.join(', ')}, 0.1)`;
+	this.semiTransparentColor = `rgba(${values.join(', ')}, 0.25)`;
+
+	this.styleEl.innerHTML = `
+		.${className} {
+			color: ${this.color};
+		}
+		.${className} .source-input,
+		.${className} .source-link
+		{
+			box-shadow: 0 2px ${this.semiTransparentColor};
+		}
+		.${className} .source-input:focus,
+		.${className} .source-link:hover
+		{
+			box-shadow: 0 2px ${this.color};
+		}
+
+		::selection{
+			background: ${this.semiTransparentColor};
+			color: ${this.inverseColor};
+		}
+		::-moz-selection{
+			background: ${this.semiTransparentColor};
+			color: ${this.inverseColor};
+		}
+
+		.${className} .fps-canvas { background:${this.transparentColor}; }
+
+		::-moz-placeholder { color:${this.semiTransparentColor}; }
+		input:-moz-placeholder { color:${this.semiTransparentColor}; }
+		:-ms-input-placeholder { color:${this.semiTransparentColor}; }
+		::-webkit-input-placeholder { color:${this.semiTransparentColor}; }
+	`;
 
 	return this;
 };

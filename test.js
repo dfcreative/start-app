@@ -19,6 +19,12 @@ var demo = createDemo({
 	// orientation: 'horizontal'
 });
 
+
+setTimeout(() => {
+	demo.setColor('green');
+}, 1000);
+
+
 //enable render
 raf(function draw() {
 	waveform(sine);
