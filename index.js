@@ -16,8 +16,10 @@ var hsl = require('color-space/hsl');
 var pad = require('left-pad');
 var isMobile = require('is-mobile')();
 var xhr = require('xhr');
+var getUserMedia = require('getusermedia');
 
 module.exports = StartApp;
+
 
 
 /**
@@ -86,7 +88,7 @@ function StartApp (opts, cb) {
 			<a href="#enter-url" ${this.url ? '' : 'hidden'} class="source-link source-link-url">enter URL</a>
 			${this.url && this.mic ? ' or' : ''}
 			<a href="#enable-mic" ${this.mic ? '' : 'hidden'} class="source-link source-link-mic">
-				enable microphone
+				enable mic
 			</a>
 		</span>
 		<input class="source-input source-input-file" hidden type="file"/>
@@ -133,7 +135,23 @@ function StartApp (opts, cb) {
 	this.sourceInputMic = this.sourceEl.querySelector('.source-link-mic');
 	this.sourceInputMic.addEventListener('click', (e) => {
 		e.preventDefault();
-		// this.showInput();
+		getUserMedia({audio: true, video: false}, (err, stream) => {
+			this.hideInput();
+			if (err) {
+				this.sourceTitle.innerHTML = err;//`microphone is not allowed`;
+				this.sourceIcon.innerHTML = this.icons.error;
+				setTimeout(() => {
+					if (!this.source) this.showInput();
+					cb && cb(new Error('Not an audio'));
+				}, 1000);
+			} else {
+				this.sourceTitle.innerHTML = `Microphone`;
+				this.sourceIcon.innerHTML = this.icons.mic;
+				this.audio.src = URL.createObjectURL(stream);
+				this.play();
+				this.audioStop.removeAttribute('hidden');
+			}
+		});
 	});
 
 	//init audio
@@ -167,7 +185,7 @@ function StartApp (opts, cb) {
 	this.container.appendChild(progress);
 	setInterval(() => {
 		if (this.audio) {
-			progress.style.width = (audio.currentTime / audio.duration * 100) + '%';
+			progress.style.width = ((audio.currentTime / audio.duration * 100) || 0) + '%';
 			progress.setAttribute('title', `${this.getTime(this.audio.currentTime)} / ${this.getTime(this.audio.duration)} played`);
 		}
 	}, 500)
@@ -267,7 +285,7 @@ StartApp.prototype.file = true;
 StartApp.prototype.url = true;
 
 //Enable mic input
-StartApp.prototype.mic = false;
+StartApp.prototype.mic = !!(navigator.mediaDevices || navigator.getUserMedia || navigator.mozGetUserMedia || navigator.webkitGetUserMedia);
 
 //Default (my) soundcloud API token
 StartApp.prototype.token = {
@@ -676,6 +694,7 @@ StartApp.prototype.reset = function () {
 	this.sourceTitle.innerHTML = '';
 	this.sourceInputURL.value = '';
 	this.audio.currentTime = 0;
+	this.audio.src = '';
 	this.pause();
 	this.audioStop.setAttribute('hidden', true);
 	this.showInput();

@@ -5,14 +5,14 @@ var xhr = require('xhr');
 
 var demo = createDemo({
 	// source: 'http://sampleswap.org/samples-ghost/LOOPING%20AMBIENCE%20and%20NOISE/563[kb]074_the-dream-click-bass.wav.mp3',
-	source: 'https://soundcloud.com/esteban-lara/sets/premieres',
+	// source: 'https://soundcloud.com/esteban-lara/sets/premieres',
 	url: true,
 	file: true,
-	mic: false,
+	// mic: true,
 	color: 'rgb(40,40,40)',
 	// fullscreen: true,
 	// microphone: true,
-	autoplay: true,
+	autoplay: false,
 	fps: true,
 	// time: true,
 	// forkme: 'https://github.com/audio-lab',
