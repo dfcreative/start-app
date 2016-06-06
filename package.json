@@ -7,12 +7,6 @@
     "test": "budo test -- -t bubleify",
     "test:browser": "budo test -- -t bubleify"
   },
-  "files": [
-    "index.js",
-    "test.js",
-    "index.css",
-    "image"
-  ],
   "browserify": {
     "transform": [
       "sheetify/transform",
