@@ -8,7 +8,6 @@ var sf = require('sheetify');
 var className = sf('./index.css');
 var ctx = require('audio-context');
 var URLParser = require('url');
-var scResolve = require('soundcloud-resolve');
 var fs = require('fs');
 var raf = require('raf');
 var now = require('right-now');
@@ -16,6 +15,7 @@ var colorParse = require('color-parse');
 var hsl = require('color-space/hsl');
 var pad = require('left-pad');
 var isMobile = require('is-mobile')();
+var xhr = require('xhr');
 
 module.exports = StartApp;
 
@@ -450,6 +450,8 @@ StartApp.prototype.setColor = function (color) {
  * Set source to play
  */
 StartApp.prototype.setSource = function (src, cb) {
+	var self = this;
+
 	//Undefined source - no action
 	if (!src) {
 		return this;
@@ -506,50 +508,95 @@ StartApp.prototype.setSource = function (src, cb) {
 	if (url.hostname === 'soundcloud.com') {
 		this.sourceIcon.innerHTML = this.icons.loading;
 		this.sourceTitle.innerHTML = 'connecting to soundcloud';
-		scResolve(this.token.soundcloud || this.token, src, (err, json, streamUrl) => {
-			if (err) {
-				cb && cb(err, streamUrl);
-				return;
-			}
+		var token = this.token.soundcloud || this.token;
 
-			this.sourceIcon.innerHTML = this.icons.soundcloud;
+		//sad ios workaround
+		if (isMobile) {
+			xhr({
+				uri: `https://api.soundcloud.com/resolve.json?client_id=${this.token.soundcloud || this.token}&url=${src}&format=json`,
+				method: 'GET'
+			}, () => {
+				xhr({
+					uri: `https://api.soundcloud.com/resolve.json?client_id=${this.token.soundcloud || this.token}&url=${src}&_status_code_map[302]=200&format=json`,
+					method: 'GET'
+				}, function (err, response) {
+					if (err) return badURL(err);
+
+					var obj = JSON.parse(response.body);
+					xhr({
+						uri: obj.location,
+						method: 'GET'
+					}, function (err, response) {
+						if (err) return badURL(err);
+
+						var json = JSON.parse(response.body);
+
+						setSoundcloud(json);
+					});
+				});
+			});
+		}
+
+		else {
+			xhr({
+				uri: `https://api.soundcloud.com/resolve.json?client_id=${this.token.soundcloud || this.token}&url=${src}`,
+				method: 'GET'
+			}, (err, response) => {
+				if (err) {
+					return badURL(err);
+				}
+
+				var json = JSON.parse(response.body);
+
+				setSoundcloud(json);
+			});
+		}
+
+		function setSoundcloud (json) {
+			var streamUrl = json.stream_url + '?client_id=' + token;
+
+			self.sourceIcon.innerHTML = self.icons.soundcloud;
 
 			//FIXME: play list of tracks properly
 			if (json.tracks) {
 				var id = Math.floor(Math.random() * json.tracks.length);
-				return this.setSource(json.tracks[id].permalink_url, cb);
+				return self.setSource(json.tracks[id].permalink_url, cb);
 			}
 
 			var maxTitle = window.innerWidth * .05;
-			this.sourceTitle.innerHTML = `
+			self.sourceTitle.innerHTML = `
 				<a class="source-link" href="${json.permalink_url}" target="_blank" title="${json.title}"><span class="text-length-limiter">${json.title}</span></a>
 			`;
 			if (json.user) {
-				this.sourceTitle.innerHTML += `by
+				self.sourceTitle.innerHTML += `by
 				<a class="source-link" href="${json.user.permalink_url}" target="_blank" title="${json.user.username}"><span class="text-length-limiter">${json.user.username}</span></a>
 				`;
 			}
 
-			this.source = streamUrl;
-			this.audio.src = streamUrl;
-			this.audioEl.removeAttribute('hidden');
-			this.audioStop.removeAttribute('hidden');
+			self.source = streamUrl;
+			self.audio.src = streamUrl;
+			self.audioEl.removeAttribute('hidden');
+			self.audioStop.removeAttribute('hidden');
 
-			this.emit('source', streamUrl);
-			cb && cb(err, streamUrl);
-		});
+			self.emit('source', streamUrl);
+
+			cb && cb(null, streamUrl);
+		}
 	}
 	else if (url.hostname === 'youtube') {
 
 	}
 	//error
 	else {
-		this.sourceTitle.innerHTML = `bad URL`;
-		this.sourceIcon.innerHTML = this.icons.error;
+		badURL();
+	}
+
+	function badURL () {
+		self.sourceTitle.innerHTML = `bad URL`;
+		self.sourceIcon.innerHTML = self.icons.error;
 		setTimeout(() => {
 			cb && cb('Bad url');
 		}, 1000);
-		return this;
 	}
 
 	return this;

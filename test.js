@@ -1,5 +1,6 @@
 var createDemo = require('./');
 var raf = require('raf');
+var xhr = require('xhr');
 
 
 var demo = createDemo({
