@@ -3,20 +3,22 @@ var raf = require('raf');
 
 
 var demo = createDemo({
-	// source: 'xxx',
+	source: 'https://soundcloud.com/esteban-lara/sets/premieres',
 	url: true,
 	file: true,
 	mic: false,
 	color: 'grey',
 	// fullscreen: true,
 	// microphone: true,
-	// autostart: true,
+	autoplay: true,
 	fps: true,
 	// time: true,
 	// forkme: 'https://github.com/audio-lab',
 	// donate: '',
 	// orientation: 'horizontal'
 }, (err, url) => {
+	console.log(url);
+
 	//enable render
 	raf(function draw() {
 		waveform(sine);

@@ -41,7 +41,7 @@ Create demo page for a component. (WIP)
 ```js
 var createDemo = require('audio-demo');
 
-createDemo({
+var app = createDemo({
 	//container to use as a start-app demo
 	container: el,
 
@@ -66,18 +66,6 @@ createDemo({
 	//enable microphone input
 	mic: false,
 
-	//start song as only as ready
-	autoplay: true,
-
-	//repeat played track or stop at the end
-	repeat: true,
-
-	//show played time
-	time: true,
-
-	//show play button close to the source
-	playPause: true,
-
 	//default color for all elements
 	color: 'black',
 
@@ -86,6 +74,15 @@ createDemo({
 
 	//show fps stats
 	fps: true,
+
+	//start song as only as ready
+	autoplay: true,
+
+	//repeat played track or stop at the end
+	loop: true,
+
+	//show progress bar at the top of the page
+	progress: true
 
 	//meta info will be added to head
 //	author: 'Iljas Miel',

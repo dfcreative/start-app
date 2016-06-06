@@ -38,4 +38,5 @@
 	- in that case we avoid mixing. Microphone becomes an alternate to file or url.
 		+ mixing can be done separately, but anyways
 	+ not every browser and app have Web-Audio-API, some may want to use ajax with pure streams for example
+	- how do we control the playback?
 * As far as we have to have a play/pause of input stream, therefore we have to use audio element to do that.

@@ -60,7 +60,7 @@ a {
 	left: .75rem;
 	display: block;
 	line-height: 2rem;
-	font-size: 1rem;
+	font-size: .9rem;
 	max-width: 100%;
 	border: none;
 	box-shadow: none;
@@ -75,7 +75,7 @@ a {
 	vertical-align: baseline;
 	line-height: 1rem;
 	height: 1rem;
-	font-size: 1rem;
+	font-size: .9rem;
 	max-width: 100%;
 	border: none;
 	box-shadow: none;
@@ -99,22 +99,23 @@ a {
 	cursor: pointer;
 }
 .source-input-url {
-    font-family: sans-serif;
-    font-weight: bold;
+	font-family: sans-serif;
+	font-weight: bold;
 }
 .source-input-url:focus {
 }
 input[type=file],
 input[type=file]::-webkit-file-upload-button {
-    cursor: pointer;
+	cursor: pointer;
 }
-.source-icon {
+i {
 	width: 1.5rem;
 	height: 1.5rem;
 	display: inline-block;
 	position: relative;
+	fill: currentColor;
 }
-.source-icon svg {
+i svg {
 	margin-bottom: -.5rem;
 	max-width: 100%;
 	max-height: 100%;
@@ -122,17 +123,21 @@ input[type=file]::-webkit-file-upload-button {
 .source-link {
 	position: relative;
 	font-weight: bold;
-    text-decoration: none;
-    box-shadow: 0px 2px;
+	text-decoration: none;
+	box-shadow: 0px 2px;
 	cursor: pointer;
+}
+
+.text-length-limiter {
+	display: inline-block;
+	max-width: 40%;
+	vertical-align: top;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
 }
 .source-title {
 	display: inline;
-    overflow: hidden;
-    white-space: nowrap;
-    vertical-align: baseline;
-    text-overflow: ellipsis;
-    max-width: 50vw;
 }
 
 .fps {
@@ -157,4 +162,17 @@ input[type=file]::-webkit-file-upload-button {
 }
 
 .fps-value {
+}
+
+.audio-playback {
+
+}
+
+.progress {
+	position: fixed;
+	top: 0;
+	left: 0;
+	height: .2rem;
+	background: currentColor;
+	transition: .1s linear width;
 }

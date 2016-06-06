@@ -14,6 +14,7 @@ var raf = require('raf');
 var now = require('right-now');
 var colorParse = require('color-parse');
 var hsl = require('color-space/hsl');
+var pad = require('left-pad');
 
 module.exports = StartApp;
 
@@ -41,8 +42,9 @@ function StartApp (opts, cb) {
 
 	//create layout
 	this.sourceEl.innerHTML = `
-		<i class="source-icon"></i>
+		<i class="source-icon">${this.icons.loading}</i>
 		<span class="source-text"></span>
+		<a href="#audio" class="audio-playback" hidden><i class="audio-icon">${this.icons.play}</i></a>
 	`;
 	this.sourceIcon = this.sourceEl.querySelector('.source-icon');
 	this.sourceText = this.sourceEl.querySelector('.source-text');
@@ -104,6 +106,36 @@ function StartApp (opts, cb) {
 		// this.showInput();
 	});
 
+	//init audio
+	var audio = this.audio = new Audio();
+	this.audio.loop = this.loop;
+	this.audio.crossOrigin = 'Anonymous';
+	this.audioEl = this.sourceEl.querySelector('.audio-playback');
+	this.audioIcon = this.sourceEl.querySelector('.audio-icon');
+	this.audio.addEventListener('canplay', () => {
+		this.autoplay && this.play();
+	});
+	this.audioEl.addEventListener('click', (e) => {
+		e.preventDefault();
+		if (this.audio.paused) {
+			this.play();
+		}
+		else {
+			this.pause();
+		}
+	});
+
+	//init progress bar
+	var progress = this.progressEl = document.createElement('div');
+	this.progressEl.classList.add('progress');
+	if (!this.progress) this.progressEl.setAttribute('hidden', true);
+	this.progressEl.setAttribute('title', '00:00');
+	this.container.appendChild(progress);
+	setInterval(() => {
+		progress.style.width = (audio.currentTime / audio.duration * 100) + '%';
+		progress.setAttribute('title', `${this.getTime(this.audio.currentTime)} / ${this.getTime(this.audio.duration)} played`);
+	}, 500)
+
 
 	//init fps
 	this.fpsEl = document.createElement('div');
@@ -131,6 +163,7 @@ function StartApp (opts, cb) {
 	var maxFPS = 100;
 	var that = this;
 
+	//enable update routine
 	raf(function measure () {
 		count++;
 		var t = now();
@@ -150,6 +183,7 @@ function StartApp (opts, cb) {
 
 			fpsValue.innerHTML = (values[values.length - 1]*maxFPS).toFixed(1);
 		}
+
 		raf(measure);
 	});
 
@@ -183,6 +217,13 @@ StartApp.prototype.token = {
 //display micro fps counter
 StartApp.prototype.fps = true;
 
+//autostart play
+StartApp.prototype.autoplay = true;
+StartApp.prototype.loop = true;
+
+//enable progress indicator
+StartApp.prototype.progress = true;
+
 //icon paths
 StartApp.prototype.icons = {
 	record: fs.readFileSync(__dirname + '/image/record.svg', 'utf8'),
@@ -191,7 +232,9 @@ StartApp.prototype.icons = {
 	open: fs.readFileSync(__dirname + '/image/open.svg', 'utf8'),
 	loading: fs.readFileSync(__dirname + '/image/loading.svg', 'utf8'),
 	url: fs.readFileSync(__dirname + '/image/url.svg', 'utf8'),
-	mic: fs.readFileSync(__dirname + '/image/mic.svg', 'utf8')
+	mic: fs.readFileSync(__dirname + '/image/mic.svg', 'utf8'),
+	play: fs.readFileSync(__dirname + '/image/play.svg', 'utf8'),
+	pause: fs.readFileSync(__dirname + '/image/pause.svg', 'utf8')
 };
 
 /**
@@ -246,18 +289,27 @@ StartApp.prototype.update = function (opts) {
 		`;
 	}
 
-	if (this.dragAndDrop) {
-		var target;
+	if (this.dragAndDrop && !this.isDnD) {
+		this.isDnD = true;
+		var title, icon, target;
+
 		this.container.addEventListener('dragstart', (e) => {
-			if (e.target != this.container) {
-				e.preventDefault();
-				return false;
-			}
-		});
+			//ignore dragging the container
+			//FIXME: maybe we need a bit more specifics here, by components
+			e.preventDefault();
+			return false;
+		}, false);
 		this.container.addEventListener('dragenter', (e) => {
+			if (target) return;
 			target = e.target;
+			// if (e.target != this.container) return;
+
 			this.container.classList.add('dragover');
 			e.dataTransfer.dropEffect = 'copy';
+
+			//save initial values
+			title = this.sourceTitle.innerHTML;
+			icon = this.sourceIcon.innerHTML;
 
 			var dt = e.dataTransfer;
 			var list = dt.files, src;
@@ -265,20 +317,34 @@ StartApp.prototype.update = function (opts) {
 			this.hideInput();
 			this.sourceTitle.innerHTML = `drop audio file`;
 			this.sourceIcon.innerHTML = this.icons.record;
-		}, false);
+		});
 
 		this.container.addEventListener('dragleave', (e) => {
-			if (e.target !== target) return;
+			if (e.target != this.container) return;
+
+			target = null;
 			this.container.classList.remove('dragover');
-			this.showInput();
+			if (this.source) {
+				this.sourceTitle.innerHTML = title;
+				this.sourceIcon.innerHTML = icon;
+			}
+			else {
+				this.showInput();
+			}
 		}, false);
 
 		this.container.addEventListener('drop', (e) => {
 			e.preventDefault();
 			this.container.classList.remove('dragover');
+			target = null;
 
 			var dt = e.dataTransfer;
-			this.setSource(dt.files);
+			this.setSource(dt.files, (err, data) => {
+				if (err) {
+					this.sourceTitle.innerHTML = title;
+					this.sourceIcon.innerHTML = icon;
+				}
+			});
 		}, false);
 
 		this.container.addEventListener('dragover', (e) => {
@@ -311,6 +377,7 @@ StartApp.prototype.setSource = function (src, cb) {
 	if (!src) {
 		return this;
 	}
+
 	this.hideInput();
 
 	//find first audio file from the list
@@ -343,6 +410,8 @@ StartApp.prototype.setSource = function (src, cb) {
 		this.sourceTitle.innerHTML = src.name;
 
 		this.source = url;
+		this.audio.src = url;
+		this.audioEl.removeAttribute('hidden');
 
 		this.emit('source', url);
 		cb && cb(null, url);
@@ -357,6 +426,8 @@ StartApp.prototype.setSource = function (src, cb) {
 	}
 
 	if (url.hostname === 'soundcloud.com') {
+		this.sourceIcon.innerHTML = this.icons.loading;
+		this.sourceTitle.innerHTML = 'connecting to soundcloud';
 		scResolve(this.token.soundcloud || this.token, src, (err, json, streamUrl) => {
 			if (err) {
 				cb && cb(err, streamUrl);
@@ -365,16 +436,25 @@ StartApp.prototype.setSource = function (src, cb) {
 
 			this.sourceIcon.innerHTML = this.icons.soundcloud;
 
-			this.sourceText.innerHTML = `
-				<a class="source-link" href="${json.permalink_url}" target="_blank">${json.title}</a>
+			//FIXME: play list of tracks properly
+			if (json.tracks) {
+				var id = Math.floor(Math.random() * json.tracks.length);
+				return this.setSource(json.tracks[id].permalink_url, cb);
+			}
+
+			var maxTitle = window.innerWidth * .05;
+			this.sourceTitle.innerHTML = `
+				<a class="source-link" href="${json.permalink_url}" target="_blank" title="${json.title}"><span class="text-length-limiter">${json.title}</span></a>
 			`;
 			if (json.user) {
-				this.sourceText.innerHTML += `by
-				<a class="source-link" href="${json.user.permalink_url}" target="_blank">${json.user.username}</a>
+				this.sourceTitle.innerHTML += `by
+				<a class="source-link" href="${json.user.permalink_url}" target="_blank" title="${json.user.username}"><span class="text-length-limiter">${json.user.username}</span></a>
 				`;
 			}
 
 			this.source = streamUrl;
+			this.audio.src = streamUrl;
+			this.audioEl.removeAttribute('hidden');
 
 			this.emit('source', streamUrl);
 			cb && cb(err, streamUrl);
@@ -404,6 +484,7 @@ StartApp.prototype.showInput = function () {
 	this.sourceInputURL.setAttribute('hidden', true);
 	this.sourceIcon.innerHTML = this.file ? this.icons.open : this.url ? this.icons.url : this.mic ? this.icons.mic : this.icons.open;
 	this.sourceTitle.innerHTML = '';
+	this.audioEl.setAttribute('hidden', true);
 
 	return this;
 }
@@ -413,3 +494,25 @@ StartApp.prototype.hideInput = function () {
 
 	return this;
 };
+
+
+/**
+ * Play/stop audio
+ */
+StartApp.prototype.play = function () {
+	this.audio.play();
+	this.audioEl.title = `Pause`;
+	this.audioIcon.innerHTML = this.icons.pause;
+
+	return this;
+}
+StartApp.prototype.pause = function () {
+	this.audio.pause();
+	this.audioEl.title = `Play`;
+	this.audioIcon.innerHTML = this.icons.play;
+
+	return this;
+}
+StartApp.prototype.getTime = function (time) {
+	return pad((time / 60)|0, 2, 0) + ':' + pad((time % 60)|0, 2, 0);
+}
