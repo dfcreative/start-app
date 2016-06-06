@@ -4,7 +4,7 @@ Create demo page for an audio component.
 
 ## Usage
 
-[![npm install gl-spectrum](https://nodei.co/npm/gl-spectrum.png?mini=true)](https://npmjs.org/package/gl-spectrum/)
+[![npm install start-app](https://nodei.co/npm/start-app.png?mini=true)](https://npmjs.org/package/start-app/)
 
 ```js
 var createDemo = require('audio-demo');
