@@ -57,16 +57,6 @@ function StartApp (opts, cb) {
 		metaEl.setAttribute('content', 'yes');
 		(document.head || document.documentElement).appendChild(metaEl);
 
-		this.tapToStart = document.createElement('div');
-		this.tapToStart.classList.add('tap-to-start');
-		this.tapToStart.innerHTML = `
-			<i class="tap-to-start-icon">${this.icons.tap}</i>
-		`;
-		this.tapToStartIcon = this.tapToStart.querySelector('.tap-to-start-icon');
-		this.tapToStartIcon.style.background = this.inverseColor;
-		this.tapToStart.style.background = `rgba(${this.colorValues.join(',')}, .92)`;
-		(document.body || document.documentElement).appendChild(this.tapToStart);
-
 		setTimeout(() => {
 			window.scrollTo(0, 0);
 		}, 0);
@@ -88,7 +78,7 @@ function StartApp (opts, cb) {
 			<a href="#enter-url" ${this.url ? '' : 'hidden'} class="source-link source-link-url">enter URL</a>
 			${this.url && this.mic ? ' or' : ''}
 			<a href="#enable-mic" ${this.mic ? '' : 'hidden'} class="source-link source-link-mic">
-				enable mic
+				enable microphone
 			</a>
 		</span>
 		<input class="source-input source-input-file" hidden type="file"/>
@@ -149,6 +139,7 @@ function StartApp (opts, cb) {
 				this.sourceIcon.innerHTML = this.icons.mic;
 				this.audio.src = URL.createObjectURL(stream);
 				this.play();
+				this.audioStop.querySelector('i').innerHTML = this.icons.stop;
 				this.audioStop.removeAttribute('hidden');
 			}
 		});
@@ -244,33 +235,17 @@ function StartApp (opts, cb) {
 
 	this.update();
 
-	//bind start call
-	if (isMobile && this.mobile) {
-		this.tapToStart.addEventListener('click', () => {
-			this.tapToStart.setAttribute('hidden', true);
-			if (this.source) {
-				this.setSource(this.source, (err) => {
-					if (err) this.showInput();
-					cb && cb(null, this.source);
-				});
-			}
-			else {
+	setTimeout(() => {
+		if (this.source) {
+			this.setSource(this.source, (err) => {
+				if (err) this.showInput();
 				cb && cb(null, this.source);
-			}
-		});
-	} else {
-		setTimeout(() => {
-			if (this.source) {
-				this.setSource(this.source, (err) => {
-					if (err) this.showInput();
-					cb && cb(null, this.source);
-				});
-			}
-			else {
-				cb && cb(null, this.source);
-			}
-		});
-	}
+			});
+		}
+		else {
+			cb && cb(null, this.source);
+		}
+	});
 }
 
 inherits(StartApp, Emitter);
@@ -315,8 +290,7 @@ StartApp.prototype.icons = {
 	play: fs.readFileSync(__dirname + '/image/play.svg', 'utf8'),
 	pause: fs.readFileSync(__dirname + '/image/pause.svg', 'utf8'),
 	stop: fs.readFileSync(__dirname + '/image/stop.svg', 'utf8'),
-	eject: fs.readFileSync(__dirname + '/image/eject.svg', 'utf8'),
-	tap: fs.readFileSync(__dirname + '/image/tap.svg', 'utf8')
+	eject: fs.readFileSync(__dirname + '/image/eject.svg', 'utf8')
 };
 
 //do mobile routines
@@ -696,6 +670,7 @@ StartApp.prototype.reset = function () {
 	this.audio.currentTime = 0;
 	this.audio.src = '';
 	this.pause();
+	this.audioStop.querySelector('i').innerHTML = this.icons.eject;
 	this.audioStop.setAttribute('hidden', true);
 	this.showInput();
 }

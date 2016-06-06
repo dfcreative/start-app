@@ -135,6 +135,7 @@ i svg {
 	font-weight: bold;
 	text-decoration: none;
 	box-shadow: 0px 2px;
+	white-space: nowrap;
 	cursor: pointer;
 }
 
@@ -187,29 +188,4 @@ i svg {
 	height: .2rem;
 	background: currentColor;
 	transition: .1s linear width;
-}
-
-.tap-to-start {
-	position: absolute;
-	top: 0;
-	left: 0;
-	bottom: 0;
-	right: 0;
-	cursor: pointer;
-	z-index: 999;
-}
-
-.tap-to-start-icon {
-	position: absolute;
-	top: 0;
-	left: 0;
-	bottom: 0;
-	right: 0;
-	margin: auto;
-	text-align: center;
-	padding: .7rem;
-	width: 6rem;
-	height: 6rem;
-	border-radius: 6rem;
-	box-shadow: 0 0 0 .7rem;
 }
