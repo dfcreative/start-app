@@ -1,13 +1,16 @@
 {
   "name": "start-app",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Create demo page for an audio-component",
   "main": "index.js",
   "scripts": {
     "test": "budo test -- -t bubleify",
     "test:browser": "budo test -- -t bubleify"
   },
-  "files": ["index.js", "test.js"],
+  "files": [
+    "index.js",
+    "test.js"
+  ],
   "browserify": {
     "transform": [
       "sheetify/transform",
