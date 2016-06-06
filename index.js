@@ -505,7 +505,7 @@ StartApp.prototype.setSource = function (src, cb) {
 		var url = URLParser.parse(src);
 	}
 
-	if (url.hostname === 'soundcloud.com') {
+	if (/soundcloud/.test(url.hostname)) {
 		this.sourceIcon.innerHTML = this.icons.loading;
 		this.sourceTitle.innerHTML = 'connecting to soundcloud';
 		var token = this.token.soundcloud || this.token;
@@ -583,12 +583,42 @@ StartApp.prototype.setSource = function (src, cb) {
 			cb && cb(null, streamUrl);
 		}
 	}
-	else if (url.hostname === 'youtube') {
 
-	}
-	//error
+	// else if (/youtu/.test(url.hostname)) {
+	// 	this.sourceIcon.innerHTML = this.icons.loading;
+	// 	this.sourceTitle.innerHTML = 'connecting to youtube';
+	// 	var token = this.token.youtube || this.token;
+
+
+	// 	self.source = url.href;
+	// 	self.audio.src = url.href;
+	// 	console.log(self.audio.src)
+	// 	self.audioEl.removeAttribute('hidden');
+	// 	self.audioStop.removeAttribute('hidden');
+	// }
+
+	//default url
 	else {
-		badURL();
+		// xhr({
+		// 	url: url.href,
+		// 	method: 'GET',
+		// 	useXDR: true,
+		// 	headers: {
+		// 		'Access-Control-Allow-Credentials': true,
+		// 		'Access-Control-Allow-Origin': 'http://sampleswap.org/',
+		// 		// Access-Control-Request-Method: PUT
+		// 		// Access-Control-Request-Headers: X-Custom-Header
+		// 	}
+		// }, (err, resp) => {
+		// 	console.log(resp)
+		// });
+
+		self.source = url.href;
+		self.audio.src = url.href;
+		self.audioEl.removeAttribute('hidden');
+		self.audioStop.removeAttribute('hidden');
+
+		// badURL();
 	}
 
 	function badURL () {

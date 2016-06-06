@@ -4,6 +4,7 @@ var xhr = require('xhr');
 
 
 var demo = createDemo({
+	// source: 'http://sampleswap.org/samples-ghost/LOOPING%20AMBIENCE%20and%20NOISE/563[kb]074_the-dream-click-bass.wav.mp3',
 	source: 'https://soundcloud.com/esteban-lara/sets/premieres',
 	url: true,
 	file: true,
