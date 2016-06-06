@@ -59,7 +59,7 @@ a {
 	top: .5rem;
 	left: .75rem;
 	display: block;
-	line-height: 1.5;
+	line-height: 1.5rem;
 	font-size: .9rem;
 	max-width: 100%;
 	border: none;
@@ -151,10 +151,9 @@ i svg {
 
 .fps {
 	position: fixed;
-	bottom: .5rem;
-	left: .75rem;
-	height: 2rem;
-	line-height: 2rem;
+	top: .5rem;
+	right: .75rem;
+	line-height: 1.5rem;
 	font-size: .9rem;
 }
 
