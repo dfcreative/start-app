@@ -9,7 +9,8 @@
   },
   "files": [
     "index.js",
-    "test.js"
+    "test.js",
+    "index.css"
   ],
   "browserify": {
     "transform": [
