@@ -101,6 +101,7 @@ a {
 .source-input-url {
 	font-family: sans-serif;
 	font-weight: bold;
+	min-width: 40vw;
 }
 .source-input-url:focus {
 }

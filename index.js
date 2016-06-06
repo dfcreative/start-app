@@ -44,7 +44,7 @@ function StartApp (opts, cb) {
 	this.sourceEl.innerHTML = `
 		<i class="source-icon">${this.icons.loading}</i>
 		<span class="source-text"></span>
-		<a href="#audio" class="audio-playback" hidden><i class="audio-icon">${this.icons.play}</i></a>
+		<a href="#audio" class="audio-playback" hidden><i class="audio-icon">${this.icons.play}</i></a><a href="#stop" class="audio-stop" title="Reset" hidden><i class="audio-icon">${this.icons.eject}</i></a>
 	`;
 	this.sourceIcon = this.sourceEl.querySelector('.source-icon');
 	this.sourceText = this.sourceEl.querySelector('.source-text');
@@ -52,7 +52,7 @@ function StartApp (opts, cb) {
 
 	this.sourceText.innerHTML = `
 		<span class="source-links">
-			<a href="#open-file" ${this.file ? '' : 'hidden'} class="source-link source-link-file">open file</a>${this.file && this.url && this.mic ? ',' : this.file && (this.url || this.mic) ? ' or' : '' }
+			<a href="#open-file" ${this.file ? '' : 'hidden'} class="source-link source-link-file">Open file</a>${this.file && this.url && this.mic ? ',' : this.file && (this.url || this.mic) ? ' or' : '' }
 			<a href="#enter-url" ${this.url ? '' : 'hidden'} class="source-link source-link-url">enter URL</a>
 			${this.url && this.mic ? ' or' : ''}
 			<a href="#enable-mic" ${this.mic ? '' : 'hidden'} class="source-link source-link-mic">
@@ -111,6 +111,7 @@ function StartApp (opts, cb) {
 	this.audio.loop = this.loop;
 	this.audio.crossOrigin = 'Anonymous';
 	this.audioEl = this.sourceEl.querySelector('.audio-playback');
+	this.audioStop = this.sourceEl.querySelector('.audio-stop');
 	this.audioIcon = this.sourceEl.querySelector('.audio-icon');
 	this.audio.addEventListener('canplay', () => {
 		this.autoplay && this.play();
@@ -124,6 +125,9 @@ function StartApp (opts, cb) {
 			this.pause();
 		}
 	});
+	this.audioStop.addEventListener('click', (e) => {
+		this.reset();
+	});
 
 	//init progress bar
 	var progress = this.progressEl = document.createElement('div');
@@ -132,8 +136,10 @@ function StartApp (opts, cb) {
 	this.progressEl.setAttribute('title', '00:00');
 	this.container.appendChild(progress);
 	setInterval(() => {
-		progress.style.width = (audio.currentTime / audio.duration * 100) + '%';
-		progress.setAttribute('title', `${this.getTime(this.audio.currentTime)} / ${this.getTime(this.audio.duration)} played`);
+		if (this.audio) {
+			progress.style.width = (audio.currentTime / audio.duration * 100) + '%';
+			progress.setAttribute('title', `${this.getTime(this.audio.currentTime)} / ${this.getTime(this.audio.duration)} played`);
+		}
 	}, 500)
 
 
@@ -234,7 +240,9 @@ StartApp.prototype.icons = {
 	url: fs.readFileSync(__dirname + '/image/url.svg', 'utf8'),
 	mic: fs.readFileSync(__dirname + '/image/mic.svg', 'utf8'),
 	play: fs.readFileSync(__dirname + '/image/play.svg', 'utf8'),
-	pause: fs.readFileSync(__dirname + '/image/pause.svg', 'utf8')
+	pause: fs.readFileSync(__dirname + '/image/pause.svg', 'utf8'),
+	stop: fs.readFileSync(__dirname + '/image/stop.svg', 'utf8'),
+	eject: fs.readFileSync(__dirname + '/image/eject.svg', 'utf8')
 };
 
 /**
@@ -412,6 +420,7 @@ StartApp.prototype.setSource = function (src, cb) {
 		this.source = url;
 		this.audio.src = url;
 		this.audioEl.removeAttribute('hidden');
+		this.audioStop.removeAttribute('hidden');
 
 		this.emit('source', url);
 		cb && cb(null, url);
@@ -455,6 +464,7 @@ StartApp.prototype.setSource = function (src, cb) {
 			this.source = streamUrl;
 			this.audio.src = streamUrl;
 			this.audioEl.removeAttribute('hidden');
+			this.audioStop.removeAttribute('hidden');
 
 			this.emit('source', streamUrl);
 			cb && cb(err, streamUrl);
@@ -497,12 +507,13 @@ StartApp.prototype.hideInput = function () {
 
 
 /**
- * Play/stop audio
+ * Play/stop/reset audio
  */
 StartApp.prototype.play = function () {
 	this.audio.play();
 	this.audioEl.title = `Pause`;
 	this.audioIcon.innerHTML = this.icons.pause;
+	this.audioStop.setAttribute('hidden', true);
 
 	return this;
 }
@@ -510,8 +521,18 @@ StartApp.prototype.pause = function () {
 	this.audio.pause();
 	this.audioEl.title = `Play`;
 	this.audioIcon.innerHTML = this.icons.play;
+	this.audioStop.removeAttribute('hidden');
 
 	return this;
+}
+StartApp.prototype.reset = function () {
+	this.pause();
+	this.source = '';
+	this.sourceTitle.innerHTML = '';
+	this.audioStop.setAttribute('hidden', true);
+	this.sourceInputURL.value = '';
+	this.audio.currentTime = 0;
+	this.showInput();
 }
 StartApp.prototype.getTime = function (time) {
 	return pad((time / 60)|0, 2, 0) + ':' + pad((time % 60)|0, 2, 0);
