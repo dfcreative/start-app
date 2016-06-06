@@ -58,7 +58,6 @@ a {
 	position: absolute;
 	top: .5rem;
 	left: .75rem;
-	right: .75rem;
 	display: block;
 	line-height: 1.5;
 	font-size: .9rem;
@@ -67,7 +66,6 @@ a {
 	box-shadow: none;
 	outline: none;
 	fill: currentColor;
-	text-align: center;
 }
 .source-input {
 	margin: 0;
@@ -141,7 +139,7 @@ i svg {
 
 .text-length-limiter {
 	display: inline-block;
-	max-width: 30%;
+	max-width: 50%;
 	vertical-align: top;
 	white-space: nowrap;
 	text-overflow: ellipsis;
@@ -155,12 +153,11 @@ i svg {
 	position: fixed;
 	bottom: .5rem;
 	left: .75rem;
-	right: .75rem;
 	height: 2rem;
 	line-height: 2rem;
 	font-size: .9rem;
-	text-align: center;
 }
+
 
 .fps-canvas {
 	height: 1rem;
@@ -188,4 +185,21 @@ i svg {
 	height: .2rem;
 	background: currentColor;
 	transition: .1s linear width;
+}
+
+@media (max-width: 640px) {
+	.text-length-limiter {
+		max-width: 30%;
+	}
+	.source {
+		right: .75rem;
+		text-align: center;
+	}
+	.fps {
+		top: auto;
+		bottom: .5rem;
+		right: .75rem;
+		left: .75rem;
+		text-align: center;
+	}
 }

@@ -12,7 +12,7 @@ var demo = createDemo({
 	color: 'rgb(40,40,40)',
 	// fullscreen: true,
 	// microphone: true,
-	autoplay: false,
+	autoplay: true,
 	fps: true,
 	// forkme: 'https://github.com/audio-lab',
 	// donate: '',

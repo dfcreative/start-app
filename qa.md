@@ -45,7 +45,7 @@
 ## Q: what are necessary features
 * input stream (section)
 	* + Drag-n-drop/upload user audio file
-	* x Record mic
+	* + Record mic
 	* ~ Open URL
 	* x Generate random soundcloud url
 	* + Play/stop switch
