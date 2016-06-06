@@ -50,7 +50,10 @@ var app = createDemo({
 	loop: true,
 
 	//show progress bar at the top of the page
-	progress: true
+	progress: true,
+
+	//add mobile metas, spashscreen requiring user interaction etc
+	mobile: true
 });
 
 

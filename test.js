@@ -7,7 +7,7 @@ var demo = createDemo({
 	url: true,
 	file: true,
 	mic: false,
-	color: 'grey',
+	color: 'gray',
 	// fullscreen: true,
 	// microphone: true,
 	autoplay: true,

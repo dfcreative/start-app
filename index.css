@@ -110,14 +110,18 @@ input[type=file]::-webkit-file-upload-button {
 	cursor: pointer;
 }
 i {
+	fill: currentColor;
+}
+.source i {
 	width: 1.5rem;
 	height: 1.5rem;
 	display: inline-block;
 	position: relative;
-	fill: currentColor;
+}
+.source i svg {
+	margin-bottom: -.5rem;
 }
 i svg {
-	margin-bottom: -.5rem;
 	max-width: 100%;
 	max-height: 100%;
 }
@@ -176,4 +180,29 @@ i svg {
 	height: .2rem;
 	background: currentColor;
 	transition: .1s linear width;
+}
+
+.tap-to-start {
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+	cursor: pointer;
+	z-index: 999;
+}
+
+.tap-to-start-icon {
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+	margin: auto;
+	text-align: center;
+	padding: 1rem;
+	width: 6rem;
+	height: 6rem;
+	border-radius: 6rem;
+	box-shadow: 0 0 0 .5rem;
 }

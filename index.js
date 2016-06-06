@@ -15,6 +15,7 @@ var now = require('right-now');
 var colorParse = require('color-parse');
 var hsl = require('color-space/hsl');
 var pad = require('left-pad');
+var isMobile = require('is-mobile')();
 
 module.exports = StartApp;
 
@@ -26,6 +27,8 @@ function StartApp (opts, cb) {
 	if (!(this instanceof StartApp)) return new StartApp(opts, cb);
 
 	extend(this, opts);
+
+	this.setColor(this.color);
 
 	//ensure container
 	if (!this.container) this.container = document.body || document.documentElement;
@@ -39,6 +42,33 @@ function StartApp (opts, cb) {
 	//create dynamic style
 	this.styleEl = document.createElement('style');
 	(document.head || document.documentElement).appendChild(this.styleEl);
+
+	//add mobile metas
+	if (isMobile && this.mobile) {
+		var metaEl = document.createElement('meta');
+		metaEl.setAttribute('name', 'viewport');
+		metaEl.setAttribute('content', 'width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=no');
+		(document.head || document.documentElement).appendChild(metaEl);
+
+		metaEl = document.createElement('meta');
+		metaEl.setAttribute('name', 'apple-mobile-web-app-capable');
+		metaEl.setAttribute('content', 'yes');
+		(document.head || document.documentElement).appendChild(metaEl);
+
+		this.tapToStart = document.createElement('div');
+		this.tapToStart.classList.add('tap-to-start');
+		this.tapToStart.innerHTML = `
+			<i class="tap-to-start-icon">${this.icons.tap}</i>
+		`;
+		this.tapToStartIcon = this.tapToStart.querySelector('.tap-to-start-icon');
+		this.tapToStartIcon.style.background = this.tapColor || this.inverseColor;
+		this.tapToStart.style.background = `rgba(${this.colorValues.join(',')}, .92)`;
+		(document.body || document.documentElement).appendChild(this.tapToStart);
+
+		setTimeout(() => {
+			window.scrollTo(0, 0);
+		}, 0);
+	}
 
 	//create layout
 	this.sourceEl.innerHTML = `
@@ -173,11 +203,11 @@ function StartApp (opts, cb) {
 	raf(function measure () {
 		count++;
 		var t = now();
-		if (t - last> updatePeriod) {
+		if (t - last > updatePeriod) {
 			var color = that.color;
 			var transparentColor = that.transparentColor;
 			last = t;
-			values.push((count - 1) / (maxFPS * updatePeriod * 0.001));
+			values.push((count) / (maxFPS * updatePeriod * 0.001));
 			values = values.slice(-len);
 			count = 0;
 
@@ -194,10 +224,35 @@ function StartApp (opts, cb) {
 	});
 
 
-	//bind start call
-	setTimeout(() => cb && cb(null, this.source));
-
 	this.update();
+
+	//bind start call
+	if (isMobile && this.mobile) {
+		this.tapToStart.addEventListener('click', () => {
+			this.tapToStart.setAttribute('hidden', true);
+			if (this.source) {
+				this.setSource(this.source, (err) => {
+					if (err) this.showInput();
+					cb && cb(null, this.source);
+				});
+			}
+			else {
+				cb && cb(null, this.source);
+			}
+		});
+	} else {
+		setTimeout(() => {
+			if (this.source) {
+				this.setSource(this.source, (err) => {
+					if (err) this.showInput();
+					cb && cb(null, this.source);
+				});
+			}
+			else {
+				cb && cb(null, this.source);
+			}
+		});
+	}
 }
 
 inherits(StartApp, Emitter);
@@ -242,8 +297,16 @@ StartApp.prototype.icons = {
 	play: fs.readFileSync(__dirname + '/image/play.svg', 'utf8'),
 	pause: fs.readFileSync(__dirname + '/image/pause.svg', 'utf8'),
 	stop: fs.readFileSync(__dirname + '/image/stop.svg', 'utf8'),
-	eject: fs.readFileSync(__dirname + '/image/eject.svg', 'utf8')
+	eject: fs.readFileSync(__dirname + '/image/eject.svg', 'utf8'),
+	tap: fs.readFileSync(__dirname + '/image/tap.svg', 'utf8')
 };
+
+//do mobile routines
+StartApp.prototype.mobile = true;
+
+//color of tap
+StartApp.prototype.tapColor = 'white';
+
 
 /**
  * Init settings
@@ -252,18 +315,7 @@ StartApp.prototype.update = function (opts) {
 	extend(this, opts);
 
 	if (this.color) {
-		var parsed = colorParse(this.color);
-		if (parsed.space === 'hsl') {
-			var values = hsl.rgb(parsed.values);
-		}
-		else {
-			var values = parsed.values;
-		}
-		this.inverseColor = `rgba(${values.map((v) => 255 - v).join(', ')}, ${parsed.alpha})`;
-		values.push(parsed.alpha * 0.25);
-		this.semiTransparentColor = `rgba(${values.join(', ')})`;
-		values[3] = parsed.alpha * 0.1;
-		this.transparentColor = `rgba(${values.join(', ')})`;
+		this.setColor(this.color);
 		this.styleEl.innerHTML = `
 			.${className} {
 				color: ${this.color};
@@ -371,9 +423,28 @@ StartApp.prototype.update = function (opts) {
 
 	}
 
-	this.setSource(this.source, (err) => {
-		if (err) this.showInput();
-	});
+	return this;
+};
+
+
+//inner method for setting color
+StartApp.prototype.setColor = function (color) {
+	color = color || this.color;
+
+	var parsed = colorParse(color);
+
+	if (parsed.space === 'hsl') {
+		var values = hsl.rgb(parsed.values);
+	}
+	else {
+		var values = parsed.values;
+	}
+	this.colorValues = values;
+	this.inverseColor = `rgba(${values.map((v) => 255 - v).join(', ')}, ${parsed.alpha})`;
+	this.transparentColor = `rgba(${values.join(', ')}, 0.1)`
+	this.semiTransparentColor = `rgba(${values.join(', ')}, 0.25)`
+
+	return this;
 };
 
 

@@ -1,7 +1,7 @@
 {
   "name": "start-app",
   "version": "1.0.0",
-  "description": "Create demo page for a component",
+  "description": "Create demo page for an audio-component",
   "main": "index.js",
   "scripts": {
     "test": "budo test",
@@ -39,6 +39,7 @@
     "color-space": "^1.14.3",
     "inherits": "^2.0.1",
     "insert-css": "^0.2.0",
+    "is-mobile": "^0.2.2",
     "left-pad": "^1.1.0",
     "raf": "^3.2.0",
     "right-now": "^1.0.0",
