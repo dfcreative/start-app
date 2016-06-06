@@ -67,6 +67,7 @@ a {
 	box-shadow: none;
 	outline: none;
 	fill: currentColor;
+	z-index: 999;
 }
 .source-input {
 	margin: 0;
@@ -156,6 +157,7 @@ i svg {
 	right: .75rem;
 	line-height: 1.5rem;
 	font-size: .9rem;
+	z-index: 999;
 }
 
 
