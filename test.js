@@ -10,20 +10,18 @@ var demo = createDemo({
 	color: 'grey',
 	// fullscreen: true,
 	// microphone: true,
-	autoplay: false,
+	autoplay: true,
 	fps: true,
 	// time: true,
 	// forkme: 'https://github.com/audio-lab',
 	// donate: '',
 	// orientation: 'horizontal'
-}, (err, url) => {
-	console.log(url);
+});
 
-	//enable render
-	raf(function draw() {
-		waveform(sine);
-		raf(draw)
-	});
+//enable render
+raf(function draw() {
+	waveform(sine);
+	raf(draw)
 });
 
 

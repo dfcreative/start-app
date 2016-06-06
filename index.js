@@ -114,7 +114,7 @@ function StartApp (opts, cb) {
 	this.audioStop = this.sourceEl.querySelector('.audio-stop');
 	this.audioIcon = this.sourceEl.querySelector('.audio-icon');
 	this.audio.addEventListener('canplay', () => {
-		this.autoplay && this.play();
+		this.source && this.autoplay && this.play();
 	});
 	this.audioEl.addEventListener('click', (e) => {
 		e.preventDefault();
@@ -526,12 +526,12 @@ StartApp.prototype.pause = function () {
 	return this;
 }
 StartApp.prototype.reset = function () {
-	this.pause();
 	this.source = '';
 	this.sourceTitle.innerHTML = '';
-	this.audioStop.setAttribute('hidden', true);
 	this.sourceInputURL.value = '';
 	this.audio.currentTime = 0;
+	this.pause();
+	this.audioStop.setAttribute('hidden', true);
 	this.showInput();
 }
 StartApp.prototype.getTime = function (time) {

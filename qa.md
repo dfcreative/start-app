@@ -40,3 +40,40 @@
 	+ not every browser and app have Web-Audio-API, some may want to use ajax with pure streams for example
 	- how do we control the playback?
 * As far as we have to have a play/pause of input stream, therefore we have to use audio element to do that.
+
+
+## Q: what are necessary features
+* input stream (section)
+	* + Drag-n-drop/upload user audio file
+	* x Record mic
+	* ~ Open URL
+	* x Generate random soundcloud url
+	* + Play/stop switch
+	* x code-generated, like tinyrave or naivesound/glitch
+	* x MIDI-input
+	* x mute btn
+	* x youtube link
+	* x web-sockets streaming any url
+* output stream
+	* x Download file/record
+	* x options/codegenerator
+	* x Drag file to fs
+* stats
+	* x stats, log area
+	* + FPS with styling
+* marketing
+	* x Forkme link
+	* x Author link
+	* x donate
+	* x Meta info like repost image, favicons
+* settings
+	* x Options switch, like style or log/linear
+	* x save setting to the URL/localstorage
+	* x Mobile "start" button - start playing file or open file
+	* x lock iphone screen & orientation
+	* x fullscreen
+	* x keep settings: url, played time
+
+* node pipe-in
+* node pipe-out
+* WAA stream into

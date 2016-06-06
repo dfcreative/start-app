@@ -1,42 +1,10 @@
-# start-app
+# start-app [![unstable](http://badges.github.io/stability-badges/dist/unstable.svg)](http://github.com/badges/stability-badges)
 
-Create demo page for a component. (WIP)
+Create demo page for an audio component.
 
-* input stream (section)
-	* Drag-n-drop/upload user audio file
-	* Record mic
-	* Open URL
-	* Generate random soundcloud url
-	* Play/stop switch
-	* code-generated, like tinyrave or naivesound/glitch
-	* MIDI-input
-	* mute btn
-	* youtube link
-	* web-sockets streaming any url
-* output stream
-	* Download file/record
-	* options/codegenerator
-	* Drag file to fs
-* stats
-	* stats, log area
-	* FPS with styling
-* marketing
-	* Forkme link
-	* Author link
-	* donate
-	* Meta info like repost image, favicons
-* settings
-	* Options switch, like style or log/linear
-	* save setting to the URL
-	* Mobile "start" button - start playing file or open file
-	* lock iphone screen & orientation
-	* fullscreen
-	* keep settings: url, played time
+## Usage
 
-* node pipe-in
-* node pipe-out
-* WAA stream into
-
+[![npm install gl-spectrum](https://nodei.co/npm/gl-spectrum.png?mini=true)](https://npmjs.org/package/gl-spectrum/)
 
 ```js
 var createDemo = require('audio-demo');
@@ -54,7 +22,7 @@ var app = createDemo({
 	//allow dropping files to browser
 	dragAndDrop: true,
 
-	//open last user settings from last session: song, time
+	//WIP open last user settings from last session: song, time
 	saveSession: true,
 
 	//enable open file dialog
@@ -83,18 +51,6 @@ var app = createDemo({
 
 	//show progress bar at the top of the page
 	progress: true
-
-	//meta info will be added to head
-//	author: 'Iljas Miel',
-//	forkme: 'repo from package.json',
-//	description: 'from package.json',
-//	title: 'from package.json',
-//	download: true,
-
-//	generateCode: true,
-//	navigation: false
-}, function ready () {
-	//called as only as app is ready
 });
 
 
