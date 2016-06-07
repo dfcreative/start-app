@@ -57,7 +57,7 @@ a {
 	margin: 0;
 	padding: 0;
 	position: absolute;
-	top: .5rem;
+	top: .75rem;
 	left: .75rem;
 	display: block;
 	line-height: 1.5rem;
@@ -153,7 +153,7 @@ i svg {
 
 .fps {
 	position: fixed;
-	top: .5rem;
+	top: .75rem;
 	right: .75rem;
 	line-height: 1.5rem;
 	font-size: .9rem;
@@ -200,7 +200,7 @@ i svg {
 	}
 	.fps {
 		top: auto;
-		bottom: .5rem;
+		bottom: .75rem;
 		right: .75rem;
 		left: .75rem;
 		text-align: center;
