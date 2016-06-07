@@ -187,6 +187,7 @@ i svg {
 	height: .2rem;
 	background: currentColor;
 	transition: .1s linear width;
+	z-index: 999;
 }
 
 @media (max-width: 640px) {
