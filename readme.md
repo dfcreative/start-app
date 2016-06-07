@@ -59,11 +59,11 @@ app.setColor(color);
 //set a new audio source
 app.setSource(url);
 
-//called when new source is set to audio
-app.on('source', (url) => {});
-
 //call to update color, icons, params etc.
 app.update(opts);
+
+//called when new source is set to audio.
+app.on('source', (url) => {});
 
 //audio node behind app, can be used for audio processing/visualization etc
 audioContext.createMediaElementSource(app.audio);

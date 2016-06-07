@@ -7,7 +7,6 @@ var extend = require('xtend/mutable');
 var sf = require('sheetify');
 var className = sf('./index.css');
 var ctx = require('audio-context');
-var URLParser = require('url');
 var fs = require('fs');
 var raf = require('raf');
 var now = require('right-now');
@@ -495,12 +494,7 @@ StartApp.prototype.setSource = function (src, cb) {
 	}
 
 
-	//handle plain URL case
-	if (typeof src === 'string') {
-		var url = URLParser.parse(src);
-	}
-
-	if (/soundcloud/.test(url.hostname)) {
+	if (/soundcloud/.test(src)) {
 		this.sourceIcon.innerHTML = this.icons.loading;
 		this.sourceTitle.innerHTML = 'connecting to soundcloud';
 		var token = this.token.soundcloud || this.token;
@@ -609,12 +603,12 @@ StartApp.prototype.setSource = function (src, cb) {
 		//
 		// });
 
-		self.source = url.href;
+		self.source = src;
 
 		self.sourceTitle.innerHTML = `
-			<a class="source-link" href="${url.href}" target="_blank" title="Open ${url.href}"><span class="text-length-limiter">${url.href}</span></a>
+			<a class="source-link" href="${src}" target="_blank" title="Open ${src}"><span class="text-length-limiter">${src}</span></a>
 		`;
-		self.audio.src = url.href;
+		self.audio.src = src;
 		self.audioEl.removeAttribute('hidden');
 		self.audioStop.removeAttribute('hidden');
 
