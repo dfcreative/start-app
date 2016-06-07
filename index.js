@@ -121,6 +121,8 @@ function StartApp (opts, cb) {
 				this.sourceTitle.innerHTML = ``;
 				this.sourceInputURL.removeAttribute('hidden');
 				this.sourceIcon.innerHTML = this.icons.url;
+				this.sourceInputURL.focus();
+
 				return;
 			}
 		});
