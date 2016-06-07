@@ -73,3 +73,7 @@ audioContext.createMediaElementSource(app.audio);
 
 * [tap-to-start](https://github.com/hughsk/tap-to-start)
 * [soundcloud-badge](https://github.com/hughsk/soundcloud-badge)
+
+## Used by
+
+* [gl-spectrum](https://github.com/audio-lab/gl-spectrum)
