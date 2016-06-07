@@ -137,6 +137,7 @@ function StartApp (opts, cb) {
 			} else {
 				this.sourceTitle.innerHTML = `Microphone`;
 				this.sourceIcon.innerHTML = this.icons.mic;
+
 				this.audio.src = URL.createObjectURL(stream);
 				this.play();
 				this.audioStop.querySelector('i').innerHTML = this.icons.stop;
@@ -482,6 +483,7 @@ StartApp.prototype.setSource = function (src, cb) {
 		this.sourceTitle.innerHTML = src.name;
 
 		this.source = url;
+
 		this.audio.src = url;
 		this.audioEl.removeAttribute('hidden');
 		this.audioStop.removeAttribute('hidden');
@@ -567,6 +569,7 @@ StartApp.prototype.setSource = function (src, cb) {
 			}
 
 			self.source = streamUrl;
+
 			self.audio.src = streamUrl;
 			self.audioEl.removeAttribute('hidden');
 			self.audioStop.removeAttribute('hidden');
@@ -585,7 +588,7 @@ StartApp.prototype.setSource = function (src, cb) {
 
 	// 	self.source = url.href;
 	// 	self.audio.src = url.href;
-	// 	console.log(self.audio.src)
+	//
 	// 	self.audioEl.removeAttribute('hidden');
 	// 	self.audioStop.removeAttribute('hidden');
 	// }
@@ -603,10 +606,12 @@ StartApp.prototype.setSource = function (src, cb) {
 		// 		// Access-Control-Request-Headers: X-Custom-Header
 		// 	}
 		// }, (err, resp) => {
-		// 	console.log(resp)
+		//
 		// });
 
 		self.source = url.href;
+
+		self.sourceTitle.innerHTML = url.href;
 		self.audio.src = url.href;
 		self.audioEl.removeAttribute('hidden');
 		self.audioStop.removeAttribute('hidden');
@@ -669,6 +674,7 @@ StartApp.prototype.reset = function () {
 	this.sourceTitle.innerHTML = '';
 	this.sourceInputURL.value = '';
 	this.audio.currentTime = 0;
+
 	this.audio.src = '';
 	this.pause();
 	this.audioStop.querySelector('i').innerHTML = this.icons.eject;
