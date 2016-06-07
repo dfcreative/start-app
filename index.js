@@ -611,7 +611,9 @@ StartApp.prototype.setSource = function (src, cb) {
 
 		self.source = url.href;
 
-		self.sourceTitle.innerHTML = url.href;
+		self.sourceTitle.innerHTML = `
+			<a class="source-link" href="${url.href}" target="_blank" title="Open ${url.href}"><span class="text-length-limiter">${url.href}</span></a>
+		`;
 		self.audio.src = url.href;
 		self.audioEl.removeAttribute('hidden');
 		self.audioStop.removeAttribute('hidden');
