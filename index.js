@@ -15,7 +15,6 @@ var hsl = require('color-space/hsl');
 var pad = require('left-pad');
 var isMobile = require('is-mobile')();
 var xhr = require('xhr');
-var getUserMedia = require('getusermedia');
 
 module.exports = StartApp;
 
@@ -26,6 +25,8 @@ module.exports = StartApp;
  */
 function StartApp (opts, cb) {
 	if (!(this instanceof StartApp)) return new StartApp(opts, cb);
+
+	var self = this;
 
 	extend(this, opts);
 
@@ -124,25 +125,39 @@ function StartApp (opts, cb) {
 	this.sourceInputMic = this.sourceEl.querySelector('.source-link-mic');
 	this.sourceInputMic.addEventListener('click', (e) => {
 		e.preventDefault();
-		getUserMedia({audio: true, video: false}, (err, stream) => {
-			this.hideInput();
-			if (err) {
-				this.sourceTitle.innerHTML = err;//`microphone is not allowed`;
-				this.sourceIcon.innerHTML = this.icons.error;
-				setTimeout(() => {
-					if (!this.source) this.showInput();
-					cb && cb(new Error('Not an audio'));
-				}, 1000);
-			} else {
-				this.sourceTitle.innerHTML = `Microphone`;
-				this.sourceIcon.innerHTML = this.icons.mic;
 
-				this.audio.src = URL.createObjectURL(stream);
-				this.play();
-				this.audioStop.querySelector('i').innerHTML = this.icons.stop;
-				this.audioStop.removeAttribute('hidden');
+		if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+			navigator.mediaDevices.getUserMedia({audio: true, video: false})
+			.then(enableMic).catch(errMic);
+		}
+		else {
+			try {
+				navigator.getUserMedia = (navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia);
+				navigator.getUserMedia({audio: true, video: false}, enableMic, errMic);
+			} catch (e) {
+				errMic(e);
 			}
-		});
+		}
+
+		function enableMic(stream) {
+			self.hideInput();
+			self.sourceTitle.innerHTML = `Microphone`;
+			self.sourceIcon.innerHTML = self.icons.mic;
+
+			self.audio.src = URL.createObjectURL(stream);
+			self.play();
+			self.audioStop.querySelector('i').innerHTML = self.icons.stop;
+			self.audioStop.removeAttribute('hidden');
+		}
+		function errMic (err) {
+			self.hideInput();
+			self.sourceTitle.innerHTML = err;//`microphone is not allowed`;
+			self.sourceIcon.innerHTML = self.icons.error;
+			setTimeout(() => {
+				if (!self.source) self.showInput();
+				cb && cb(new Error('Microphone is not allowed'));
+			}, 1000);
+		}
 	});
 
 	//init audio
