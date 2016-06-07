@@ -15,6 +15,7 @@ var hsl = require('color-space/hsl');
 var pad = require('left-pad');
 var isMobile = require('is-mobile')();
 var xhr = require('xhr');
+var isUrl = require('is-url');
 
 module.exports = StartApp;
 
@@ -97,21 +98,30 @@ function StartApp (opts, cb) {
 		this.setSource(this.sourceInputFile.files);
 	});
 	this.sourceInputURL = this.sourceEl.querySelector('.source-input-url');
+	var lastURL;
+	this.sourceInputURL.addEventListener('focus', (e) => {
+		lastURL = this.sourceInputURL.value;
+	});
 	this.sourceInputURL.addEventListener('blur', (e) => {
-		this.showInput();
+		//if nothing changed - blur
+		if (lastURL === this.sourceInputURL.value) {
+			this.showInput();
+		}
 	});
 	this.sourceInputURL.addEventListener('change', (e) => {
 		e.preventDefault();
 		this.hideInput();
 		this.sourceIcon.innerHTML = this.icons.loading;
 		this.sourceTitle.innerHTML = `loading`;
+		this.sourceInputURL.setAttribute('hidden', true);
 		this.setSource(this.sourceInputURL.value, (err) => {
+			this.hideInput();
 			//in case of error allow second chance
 			if (err) {
-				this.hideInput();
 				this.sourceTitle.innerHTML = ``;
 				this.sourceInputURL.removeAttribute('hidden');
 				this.sourceIcon.innerHTML = this.icons.url;
+				return;
 			}
 		});
 	});
@@ -494,7 +504,7 @@ StartApp.prototype.setSource = function (src, cb) {
 	if (src instanceof File) {
 		var url = URL.createObjectURL(src);
 		this.sourceIcon.innerHTML = this.icons.record;
-		this.sourceTitle.innerHTML = src.name;
+		this.sourceTitle.innerHTML = `<a class="source-link" href="${url}" target="_blank" title="${src.name}"><span class="text-length-limiter">${src.name}</span></a>`;
 
 		this.source = url;
 
@@ -604,34 +614,34 @@ StartApp.prototype.setSource = function (src, cb) {
 
 	//default url
 	else {
-		// xhr({
-		// 	url: url.href,
-		// 	method: 'GET',
-		// 	useXDR: true,
-		// 	headers: {
-		// 		'Access-Control-Allow-Credentials': true,
-		// 		'Access-Control-Allow-Origin': 'http://sampleswap.org/',
-		// 		// Access-Control-Request-Method: PUT
-		// 		// Access-Control-Request-Headers: X-Custom-Header
-		// 	}
-		// }, (err, resp) => {
-		//
-		// });
+		if (!isUrl(src)) {
+			badURL();
+			return this;
+		}
 
-		self.source = src;
+		xhr({
+			url: src,
+			method: 'GET',
+		}, (err, resp) => {
+			if (err) return badURL(err);
 
-		self.sourceTitle.innerHTML = `
-			<a class="source-link" href="${src}" target="_blank" title="Open ${src}"><span class="text-length-limiter">${src}</span></a>
-		`;
-		self.audio.src = src;
-		self.audioEl.removeAttribute('hidden');
-		self.audioStop.removeAttribute('hidden');
+			//FIXME: here actually possible to handle websockets/stuff, not the stupid method below
+			self.source = src;
 
-		// badURL();
+			self.sourceTitle.innerHTML = `
+				<a class="source-link" href="${src}" target="_blank" title="Open ${src}"><span class="text-length-limiter">${src}</span></a>
+			`;
+			self.audio.src = src;
+			self.audioEl.removeAttribute('hidden');
+			self.audioStop.removeAttribute('hidden');
+
+			this.emit('source', src);
+			cb && cb(null, src);
+		});
 	}
 
-	function badURL () {
-		self.sourceTitle.innerHTML = `bad URL`;
+	function badURL (err) {
+		self.sourceTitle.innerHTML = err || `bad URL`;
 		self.sourceIcon.innerHTML = self.icons.error;
 		setTimeout(() => {
 			cb && cb('Bad url');

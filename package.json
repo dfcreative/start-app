@@ -39,6 +39,7 @@
     "inherits": "^2.0.1",
     "insert-css": "^0.2.0",
     "is-mobile": "^0.2.2",
+    "is-url": "^1.2.1",
     "left-pad": "^1.1.0",
     "raf": "^3.2.0",
     "right-now": "^1.0.0",

@@ -141,7 +141,7 @@ i svg {
 
 .text-length-limiter {
 	display: inline-block;
-	max-width: 50%;
+	max-width: 40vw;
 	vertical-align: top;
 	white-space: nowrap;
 	text-overflow: ellipsis;
