@@ -13,11 +13,14 @@ var app = createDemo({
 	//container to use as a start-app demo
 	container: el,
 
-	//default source url to play, if undefined - last session or open file dialog will be shown
+	//audio context (by default audio-context module)
+	context: audioContext,
+
+	//default source url to play, if undefined open file dialog will be shown
 	source: null,
 
-	//API token (for soundcloud, youtube etc.)
-	token: {soundcloud, youtube},
+	//API token for soundcloud
+	token: 'xxxxx...',
 
 	//allow dropping files to browser
 	dragAndDrop: true,
@@ -61,10 +64,10 @@ var app = createDemo({
 	//show title of track/current source
 	title: true,
 
-	//show icon
+	//show status icon
 	icon: true,
 
-	//enable settings menu, or object containing settings
+	//WIP enable settings menu, or object containing settings
 	settings: {
 		fill: {
 			type: 'checkbox',
@@ -82,31 +85,35 @@ var app = createDemo({
 	}
 });
 
-//set color of fonts, icons, fps etc.
+//call to update options
+app.update(opts);
+
+//set color of fonts, icons, fps etc. Better than calling update.
 app.setColor(color);
+
 
 //set a new audio source
 app.setSource(url);
 
-//call to update color, icons, params etc.
-app.update(opts);
+//called when new source is set.
+app.on('source', (url) => {});
 
-//control playback
+
+//control playback & menu - play/pause/stop
 app.play();
 app.pause();
 app.reset();
-
-//called when new source is set to audio.
-app.on('source', (url) => {});
 
 //called when track is played/paused/stopped
 app.on('play', () => {});
 app.on('pause', () => {});
 app.on('stop', () => {});
 
-//called when ready to play
+//called when ready to play. The audioNode is connected to destination, so reconnect in case of specific sound processing/capturing
 app.on('ready', (audioNode) => {});
 
+
+//WIP--------
 //called when any of settings changed
 app.on('change', (name, value) => {});
 

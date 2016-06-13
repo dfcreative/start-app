@@ -53,6 +53,11 @@ a {
 :host.dragover .source {
 }
 
+:host.dragover .audio-stop,
+:host.dragover .audio-playback {
+	display: none;
+}
+
 .source {
 	margin: 0;
 	padding: 0;

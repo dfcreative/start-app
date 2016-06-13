@@ -80,11 +80,11 @@
 
 ## Q: how can we make things work now?
 
-* For microphone we can createMediaStream node.
+* ✔ For microphone we can createMediaStream node.
 * For local mp3 file we can fully buffer it and return audiobuffersource.
 * Websockets?
 	* the predominant approach is decoding mp3 data to buffer. Guess they glue things up in scriptProcessorNode.
-* WebRTC?
+* ✔ WebRTC?
 	* will work with mediaDevices, same way as microphone.
 * audio stream (soundcloud)?
 	* We can createMediaElement - it works (fhuh)

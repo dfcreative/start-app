@@ -16,13 +16,14 @@ var demo = createDemo({
 	color: 'rgb(40,40,40)',
 	// fullscreen: true,
 	// microphone: true,
-	autoplay: true,
+	// autoplay: true,
 	fps: true,
 	// forkme: 'https://github.com/audio-lab',
 	// donate: '',
 	// orientation: 'horizontal'
 });
 
+demo.on('ready', (node) => console.log(node));
 
 setTimeout(() => {
 	demo.setColor('green');

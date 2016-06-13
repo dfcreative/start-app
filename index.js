@@ -15,6 +15,7 @@ var pad = require('left-pad');
 var isMobile = require('is-mobile')();
 var xhr = require('xhr');
 var isUrl = require('is-url');
+var ctx = require('audio-context');
 
 module.exports = StartApp;
 
@@ -158,10 +159,20 @@ function StartApp (opts, cb) {
 			self.sourceIcon.setAttribute('title', self.sourceTitle.textContent);
 			self.sourceIcon.innerHTML = self.icons.mic;
 
-			self.audio.src = URL.createObjectURL(stream);
-			self.play();
+			//an alternative way to start media stream - do not work in chrome
+			var streamUrl = URL.createObjectURL(stream);
+			// self.audio.src = streamUrl;
+			// self.play();
+
+			//create media stream source node
+			self.micNode = self.context.createMediaStreamSource(stream);
+			self.micNode.connect(self.context.destination);
+
 			self.audioStop.querySelector('i').innerHTML = self.icons.stop;
 			self.stop && self.audioStop.removeAttribute('hidden');
+
+			self.emit('ready', self.micNode);
+			self.emit('source', streamUrl);
 		}
 		function errMic (err) {
 			self.hideInput();
@@ -182,7 +193,10 @@ function StartApp (opts, cb) {
 	this.audioEl = this.sourceEl.querySelector('.audio-playback');
 	this.audioStop = this.sourceEl.querySelector('.audio-stop');
 	this.audioIcon = this.sourceEl.querySelector('.audio-icon');
+	this.audioNode = this.context.createMediaElementSource(this.audio);
+	this.audioNode.connect(this.context.destination);
 	this.audio.addEventListener('canplay', () => {
+		this.emit('ready', this.audioNode);
 		this.source && this.autoplay && this.play();
 	});
 	this.playPause && this.audioEl.addEventListener('click', (e) => {
@@ -206,7 +220,7 @@ function StartApp (opts, cb) {
 	this.container.appendChild(progress);
 	setInterval(() => {
 		if (this.audio) {
-			progress.style.width = ((audio.currentTime / audio.duration * 100) || 0) + '%';
+			progress.style.width = ((this.audio.currentTime / this.audio.duration * 100) || 0) + '%';
 			progress.setAttribute('title', `${this.getTime(this.audio.currentTime)} / ${this.getTime(this.audio.duration)} played`);
 		}
 	}, 500)
@@ -292,11 +306,17 @@ StartApp.prototype.stop = true;
 //show title of track/status messages
 StartApp.prototype.title = true;
 
+//show icon
+StartApp.prototype.icon = true;
+
 //Enable file select
 StartApp.prototype.file = true;
 
 //Enable url select
 StartApp.prototype.url = true;
+
+//Default audio context
+StartApp.prototype.context = ctx;
 
 //Enable mic input
 StartApp.prototype.mic = !!(navigator.mediaDevices || navigator.getUserMedia || navigator.mozGetUserMedia || navigator.webkitGetUserMedia);
@@ -739,6 +759,10 @@ StartApp.prototype.reset = function () {
 	this.audioStop.querySelector('i').innerHTML = this.icons.eject;
 	this.stop && this.audioStop.setAttribute('hidden', true);
 	this.showInput();
+
+	if (this.micNode) {
+		this.micNode.disconnect();
+	}
 
 	this.emit('stop');
 
