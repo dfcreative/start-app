@@ -44,6 +44,7 @@ function StartApp (opts, cb) {
 	this.styleEl = document.createElement('style');
 	(document.head || document.documentElement).appendChild(this.styleEl);
 
+	if (!this.color) this.color = getComputedStyle(this.container).color;
 	this.setColor(this.color);
 
 	//add mobile metas

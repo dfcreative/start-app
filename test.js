@@ -13,7 +13,7 @@ var demo = createDemo({
 	// stop: true,
 	// title: true,
 	icon: true,
-	color: 'rgb(40,40,40)',
+	// color: 'rgb(40,40,40)',
 	// fullscreen: true,
 	// microphone: true,
 	// autoplay: true,
