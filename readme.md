@@ -58,8 +58,11 @@ var app = createDemo({
 	//show stop button
 	stop: true,
 
-	//TODO: show title of track/current source
+	//show title of track/current source
 	title: true,
+
+	//show icon
+	icon: true,
 
 	//enable settings menu, or object containing settings
 	settings: {
