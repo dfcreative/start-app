@@ -77,3 +77,17 @@
 * node pipe-in
 * node pipe-out
 * WAA stream into
+
+## Q: how can we make things work now?
+
+* For microphone we can createMediaStream node.
+* For local mp3 file we can fully buffer it and return audiobuffersource.
+* Websockets?
+	* the predominant approach is decoding mp3 data to buffer. Guess they glue things up in scriptProcessorNode.
+* WebRTC?
+	* will work with mediaDevices, same way as microphone.
+* audio stream (soundcloud)?
+	* We can createMediaElement - it works (fhuh)
+* Remote mp3 file?
+	1. Whether fully load via xhr with decodeaudiodata
+	2. Or

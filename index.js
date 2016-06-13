@@ -6,7 +6,6 @@ var inherits = require('inherits');
 var extend = require('xtend/mutable');
 var sf = require('sheetify');
 var className = sf('./index.css');
-var ctx = require('audio-context');
 var fs = require('fs');
 var raf = require('raf');
 var now = require('right-now');
@@ -159,7 +158,7 @@ function StartApp (opts, cb) {
 			self.audio.src = URL.createObjectURL(stream);
 			self.play();
 			self.audioStop.querySelector('i').innerHTML = self.icons.stop;
-			self.audioStop.removeAttribute('hidden');
+			self.stop && self.audioStop.removeAttribute('hidden');
 		}
 		function errMic (err) {
 			self.hideInput();
@@ -182,7 +181,7 @@ function StartApp (opts, cb) {
 	this.audio.addEventListener('canplay', () => {
 		this.source && this.autoplay && this.play();
 	});
-	this.audioEl.addEventListener('click', (e) => {
+	this.playPause && this.audioEl.addEventListener('click', (e) => {
 		e.preventDefault();
 		if (this.audio.paused) {
 			this.play();
@@ -191,7 +190,7 @@ function StartApp (opts, cb) {
 			this.pause();
 		}
 	});
-	this.audioStop.addEventListener('click', (e) => {
+	this.stop && this.audioStop.addEventListener('click', (e) => {
 		this.reset();
 	});
 
@@ -279,6 +278,7 @@ inherits(StartApp, Emitter);
 
 //Allow dropping files to browser
 StartApp.prototype.dragAndDrop = true;
+StartApp.prototype.playPause = true;
 
 //Enable file select
 StartApp.prototype.file = true;
@@ -301,6 +301,7 @@ StartApp.prototype.fps = true;
 //autostart play
 StartApp.prototype.autoplay = true;
 StartApp.prototype.loop = true;
+
 
 //enable progress indicator
 StartApp.prototype.progress = true;
@@ -511,8 +512,8 @@ StartApp.prototype.setSource = function (src, cb) {
 		this.source = url;
 
 		this.audio.src = url;
-		this.audioEl.removeAttribute('hidden');
-		this.audioStop.removeAttribute('hidden');
+		this.playPause && this.audioEl.removeAttribute('hidden');
+		this.stop && this.audioStop.removeAttribute('hidden');
 
 		this.emit('source', url);
 		cb && cb(null, url);
@@ -592,8 +593,8 @@ StartApp.prototype.setSource = function (src, cb) {
 			self.source = streamUrl;
 
 			self.audio.src = streamUrl;
-			self.audioEl.removeAttribute('hidden');
-			self.audioStop.removeAttribute('hidden');
+			self.playPause && self.audioEl.removeAttribute('hidden');
+			self.stop && self.audioStop.removeAttribute('hidden');
 
 			self.emit('source', streamUrl);
 
@@ -634,8 +635,8 @@ StartApp.prototype.setSource = function (src, cb) {
 				<a class="source-link" href="${src}" target="_blank" title="Open ${src}"><span class="text-length-limiter">${src}</span></a>
 			`;
 			self.audio.src = src;
-			self.audioEl.removeAttribute('hidden');
-			self.audioStop.removeAttribute('hidden');
+			self.playPause && self.audioEl.removeAttribute('hidden');
+			self.stop && self.audioStop.removeAttribute('hidden');
 
 			this.emit('source', src);
 			cb && cb(null, src);
@@ -680,7 +681,9 @@ StartApp.prototype.play = function () {
 	this.audio.play();
 	this.audioEl.title = `Pause`;
 	this.audioIcon.innerHTML = this.icons.pause;
-	this.audioStop.setAttribute('hidden', true);
+	this.playPause && this.stop && this.audioStop.setAttribute('hidden', true);
+
+	this.emit('play');
 
 	return this;
 }
@@ -688,7 +691,9 @@ StartApp.prototype.pause = function () {
 	this.audio.pause();
 	this.audioEl.title = `Play`;
 	this.audioIcon.innerHTML = this.icons.play;
-	this.audioStop.removeAttribute('hidden');
+	this.playPause && this.stop && this.audioStop.removeAttribute('hidden');
+
+	this.emit('pause');
 
 	return this;
 }
@@ -701,8 +706,12 @@ StartApp.prototype.reset = function () {
 	this.audio.src = '';
 	this.pause();
 	this.audioStop.querySelector('i').innerHTML = this.icons.eject;
-	this.audioStop.setAttribute('hidden', true);
+	this.stop && this.audioStop.setAttribute('hidden', true);
 	this.showInput();
+
+	this.emit('stop');
+
+	return this;
 }
 StartApp.prototype.getTime = function (time) {
 	return pad((time / 60)|0, 2, 0) + ':' + pad((time % 60)|0, 2, 0);

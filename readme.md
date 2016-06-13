@@ -50,7 +50,33 @@ var app = createDemo({
 	loop: true,
 
 	//show progress bar at the top of the page
-	progress: true
+	progress: true,
+
+	//show play/pause buttons
+	playPause: true,
+
+	//show stop button
+	stop: true,
+
+	//TODO: show title of track/current source
+	title: true,
+
+	//enable settings menu, or object containing settings
+	settings: {
+		fill: {
+			type: 'checkbox',
+			value: true
+		},
+		colormap: {
+			type: 'select',
+			values: {
+				cdom: 'cdom',
+				inferno: 'inferno',
+				plasma: 'plasma'
+			},
+			value: 'cdom'
+		}
+	}
 });
 
 //set color of fonts, icons, fps etc.
@@ -62,11 +88,31 @@ app.setSource(url);
 //call to update color, icons, params etc.
 app.update(opts);
 
+//control playback
+app.play();
+app.pause();
+app.reset();
+
 //called when new source is set to audio.
 app.on('source', (url) => {});
 
-//audio node behind app, can be used for audio processing/visualization etc
-audioContext.createMediaElementSource(app.audio);
+//called when track is played/paused/stopped
+app.on('play', () => {});
+app.on('pause', () => {});
+app.on('stop', () => {});
+
+//called when ready to play
+app.on('ready', (audioNode) => {});
+
+//called when any of settings changed
+app.on('change', (name, value) => {});
+
+//creating settings
+app.addSelect(name, opts);
+app.addRange(name, opts);
+app.addCheckbox(name, opts);
+app.addNumber(name, opts);
+app.addText(name, opts);
 ```
 
 ## Inspired by
@@ -77,3 +123,5 @@ audioContext.createMediaElementSource(app.audio);
 ## Used by
 
 * [gl-spectrum](https://github.com/audio-lab/gl-spectrum)
+* [gl-spectrogram](https://github.com/audio-lab/gl-spectrogram)
+* [gl-waveform](https://github.com/audio-lab/gl-waveform)
