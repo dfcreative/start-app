@@ -174,6 +174,7 @@ function StartApp (opts, cb) {
 
 			self.emit('ready', self.micNode);
 			self.emit('source', streamUrl);
+			self.emit('play');
 		}
 		function errMic (err) {
 			self.hideInput();
