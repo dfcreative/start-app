@@ -228,6 +228,11 @@ function StartApp (opts, cb) {
 	}, 500)
 
 
+	//technical element for fps, params, info etc
+	this.statusEl = document.createElement('div');
+	this.statusEl.classList.add('status');
+	this.container.appendChild(this.statusEl);
+
 	//init fps
 	this.fpsEl = document.createElement('div');
 	this.fpsEl.classList.add('fps');
@@ -240,7 +245,7 @@ function StartApp (opts, cb) {
 	`;
 	this.fpsCanvas = this.fpsEl.querySelector('.fps-canvas');
 	var fpsValue = this.fpsValue = this.fpsEl.querySelector('.fps-value');
-	this.container.appendChild(this.fpsEl);
+	this.statusEl.appendChild(this.fpsEl);
 
 	var w = this.fpsCanvas.width = parseInt(getComputedStyle(this.fpsCanvas).width) || 1;
 	var h = this.fpsCanvas.height = parseInt(getComputedStyle(this.fpsCanvas).height) || 1;
@@ -253,6 +258,22 @@ function StartApp (opts, cb) {
 	var updatePeriod = 1000;
 	var maxFPS = 100;
 	var that = this;
+
+
+	//create params template
+	this.paramsEl = document.createElement('div');
+	this.paramsEl.classList.add('params');
+	this.paramsEl.setAttribute('hidden', true);
+	this.container.appendChild(this.paramsEl);
+
+	//params button
+	this.paramsBtn = document.createElement('a');
+	this.paramsBtn.classList.add('params-button');
+	this.paramsBtn.href = '#params';
+	this.paramsBtn.innerHTML = `<i>${this.icons.settings}</i>`;
+	this.paramsBtn.setAttribute('hidden', true);
+	this.statusEl.appendChild(this.paramsBtn);
+
 
 	//enable update routine
 	raf(function measure () {
@@ -352,11 +373,15 @@ StartApp.prototype.icons = {
 	play: fs.readFileSync(__dirname + '/image/play.svg', 'utf8'),
 	pause: fs.readFileSync(__dirname + '/image/pause.svg', 'utf8'),
 	stop: fs.readFileSync(__dirname + '/image/stop.svg', 'utf8'),
-	eject: fs.readFileSync(__dirname + '/image/eject.svg', 'utf8')
+	eject: fs.readFileSync(__dirname + '/image/eject.svg', 'utf8'),
+	settings: fs.readFileSync(__dirname + '/image/settings.svg', 'utf8')
 };
 
 //do mobile routines like meta, splashscreen etc
 StartApp.prototype.mobile = true;
+
+//show params button
+StartApp.prototype.params = false;
 
 
 /**
@@ -454,6 +479,14 @@ StartApp.prototype.update = function (opts) {
 		this.sourceIcon.setAttribute('hidden', true);
 	}
 
+	if (this.params) {
+		this.paramsEl.removeAttribute('hidden');
+		this.paramsBtn.removeAttribute('hidden');
+	} else {
+		this.paramsEl.setAttribute('hidden', true);
+		this.paramsBtn.setAttribute('hidden', true);
+	}
+
 	return this;
 };
 
@@ -489,6 +522,10 @@ StartApp.prototype.setColor = function (color) {
 		.${className} .source-link:hover
 		{
 			box-shadow: 0 2px ${this.color};
+		}
+
+		.${className} .params-button {
+			color: ${this.color}
 		}
 
 		::selection{
@@ -773,3 +810,40 @@ StartApp.prototype.reset = function () {
 StartApp.prototype.getTime = function (time) {
 	return pad((time / 60)|0, 2, 0) + ':' + pad((time % 60)|0, 2, 0);
 }
+
+
+/** Settings functions */
+StartApp.prototype.addParam = function (opts) {
+
+};
+StartApp.prototype.addText = function (opts) {
+
+};
+StartApp.prototype.addSelect = function (opts) {
+
+};
+StartApp.prototype.addRange = function (opts) {
+	opts = opts || {};
+	var rangeEl = document.createElement('input');
+	var title = opts.name.slice(0,1).toUpperCase() + opts.name.slice(1);
+	rangeEl.type = 'range';
+	rangeEl.min = opts.min || 0;
+	rangeEl.max = opts.max || 1;
+	rangeEl.step = opts.step || 0.01;
+	rangeEl.value = opts.value || 0.5;
+	rangeEl.classList.add(opts.name);
+	rangeEl.title = title + ': ' + rangeEl.value;
+	rangeEl.addEventListener('input', function () {
+		var v = parseFloat(rangeEl.value);
+		rangeEl.title = title + ': ' + v;
+		cb(v);
+	});
+	return rangeEl;
+};
+StartApp.prototype.addCheckbox = function (opts) {
+
+};
+StartApp.prototype.addNumber = function ( opts) {
+
+};
+

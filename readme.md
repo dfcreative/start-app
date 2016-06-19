@@ -67,13 +67,15 @@ var app = createDemo({
 	//show status icon
 	icon: true,
 
-	//WIP enable settings menu, or object containing settings
-	settings: {
-		fill: {
+	//enable settings menu, optionally with the passed fields
+	params: [
+		{
+			name: 'logarithmic',
 			type: 'checkbox',
 			value: true
 		},
-		colormap: {
+		{
+			name: 'colormap',
 			type: 'select',
 			values: {
 				cdom: 'cdom',
@@ -81,8 +83,15 @@ var app = createDemo({
 				plasma: 'plasma'
 			},
 			value: 'cdom'
+		},
+		{
+			name: '',
+			label: '',
+			type: 'text',
+			placeholder: '',
+			value:''
 		}
-	}
+	]
 });
 
 //call to update options
@@ -117,7 +126,8 @@ app.on('ready', (audioNode) => {});
 //called when any of settings changed
 app.on('change', (name, value) => {});
 
-//creating settings
+//creating parameters
+app.addParam(opts);
 app.addSelect(name, opts);
 app.addRange(name, opts);
 app.addCheckbox(name, opts);

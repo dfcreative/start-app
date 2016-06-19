@@ -22,7 +22,7 @@ a {
 }
 :host.dragover:after {
 	content: '⎗';
-	position: absolute;
+	position: fixed;
 	top: 0;
 	bottom: 0;
 	left: 0;
@@ -39,7 +39,7 @@ a {
 
 :host.dragover:before {
 	content: '';
-	position: absolute;
+	position: fixed;
 	top: 0;
 	left: 0;
 	right: 0;
@@ -58,10 +58,10 @@ a {
 	display: none;
 }
 
-.source {
+.source, .status {
 	margin: 0;
 	padding: 0;
-	position: absolute;
+	position: fixed;
 	top: .75rem;
 	left: .75rem;
 	display: block;
@@ -99,7 +99,7 @@ a {
 	outline: none;
 }
 .source-input-file {
-	position: absolute;
+	position: fixed;
 	top: 0;
 	left: 0;
 	bottom: 0;
@@ -121,12 +121,13 @@ input[type=file]::-webkit-file-upload-button {
 }
 i {
 	fill: currentColor;
-}
-.source i {
 	width: 1.5rem;
 	height: 1.5rem;
-	display: inline-block;
 	position: relative;
+	display: inline-block;
+	vertical-align: top;
+}
+.source i {
 }
 .source i svg {
 	margin-bottom: -.52rem;
@@ -156,13 +157,13 @@ i svg {
 	display: inline;
 }
 
-.fps {
-	position: fixed;
-	top: .75rem;
+.status {
+	left: auto;
 	right: .75rem;
-	line-height: 1.5rem;
-	font-size: .9rem;
-	z-index: 999;
+}
+
+.fps {
+	display: inline-block;
 }
 
 
@@ -170,7 +171,6 @@ i svg {
 	height: 1rem;
 	width: 2rem;
 	display: inline-block;
-	vertical-align: baseline;
 	margin-right: .15rem;
 	margin-bottom: -.15rem;
 }
@@ -181,8 +181,15 @@ i svg {
 .fps-value {
 }
 
-.audio-playback {
+.params-button {
+    position: relative;
+    display: inline-block;
+    margin-left: .5rem;
+}
 
+
+.audio-playback, .audio-stop {
+	display: inline-block;
 }
 
 .progress {
@@ -203,11 +210,31 @@ i svg {
 		right: .75rem;
 		text-align: center;
 	}
-	.fps {
+	.status {
 		top: auto;
 		bottom: .75rem;
 		right: .75rem;
 		left: .75rem;
 		text-align: center;
 	}
+}
+
+
+.params {
+	background: white;
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+}
+
+.param-range {
+	width: 5rem;
+	height: 1rem;
+	border: 0;
+	color: inherit;
+	font-size: .8rem;
+	margin: 0 1rem 0 0;
+	vertical-align: middle;
+	background: none;
 }
