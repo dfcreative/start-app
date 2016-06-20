@@ -263,18 +263,27 @@ function StartApp (opts, cb) {
 
 
 	//create params template
+	if (isPlainObject(this.params)) {
+		var params = [];
+		for (var name in this.params) {
+			this.params[name].name = name;
+			params.push(this.params[name]);
+		}
+		this.params = true;
+		this.paramsCollection = params;
+	}
+	else if (Array.isArray(this.params)){
+		this.paramsCollection = this.params;
+		this.params = true;
+	}
+	else {
+		this.paramsCollection = [];
+	}
 	this.paramsEl = document.createElement('div');
 	this.paramsEl.classList.add('params');
 	this.paramsEl.setAttribute('hidden', true);
-	this.paramsEl.innerHTML = `
-		No params defined yet.<br/>
-		Set them via 'addParam' method.
-	`;
-	if (this.params && this.params !== true) this.paramsEl.innerHTML = ``;
-	this.paramsEl.innerHTML += `<a class="params-close" href="#close-params"><i class="icon-close">✕</i></a>`
-	for (var param in this.params) {
-		this.addParam(this.params[param]);
-	}
+	this.paramsEl.innerHTML = `<a class="params-close" href="#close-params"><i class="icon-close">✕</i></a>`;
+	this.paramsCollection.forEach((opts) => this.addParam(opts));
 	this.container.appendChild(this.paramsEl);
 
 	//params button
@@ -413,7 +422,7 @@ StartApp.prototype.icons = {
 StartApp.prototype.mobile = true;
 
 //show params button
-StartApp.prototype.params = false;
+StartApp.prototype.params = true;
 
 
 /**
@@ -536,10 +545,14 @@ StartApp.prototype.setColor = function (color) {
 		var values = parsed.values;
 	}
 	this.colorValues = values;
+	var inverseValues = values.map((v) => 255 - v).map((v) => v * ( isDark ? .2 : 1.8)).map((v) => Math.max(Math.min(v, 255), 0));
 	this.color = `rgba(${values.join(', ')}, ${parsed.alpha})`;
-	this.inverseColor = `rgba(${values.map((v) => 255 - v).join(', ')}, ${parsed.alpha})`;
+	this.inverseColor = `rgba(${inverseValues.map(v => v.toFixed(0)).join(', ')}, ${parsed.alpha})`;
 	this.transparentColor = `rgba(${values.join(', ')}, 0.1)`;
 	this.semiTransparentColor = `rgba(${values.join(', ')}, 0.25)`;
+
+	var isDark = values[0] + values[1] + values[2] > 1.5;
+	var semiTransparentInverseColor = `rgba(${inverseValues.map(v => v.toFixed(0)).join(', ')}, .75)`;
 
 	this.styleEl.innerHTML = `
 		.${className} {
@@ -554,6 +567,10 @@ StartApp.prototype.setColor = function (color) {
 		.${className} .source-link:hover
 		{
 			box-shadow: 0 2px ${this.color};
+		}
+
+		.${className} .params {
+			background: linear-gradient(to bottom, ${this.inverseColor}, ${semiTransparentInverseColor});
 		}
 
 		.${className} .params-button {
@@ -979,5 +996,5 @@ StartApp.prototype.addParam = function (name, opts, cb) {
 StartApp.prototype.getParamValue = function (name) {
 	var el = this.paramsEl.querySelector('#' + name.toLowerCase());
 
-	return el && el.type === 'checkbox' ? el.checked : el.value;
+	return el && el.type === 'checkbox' ? el.checked : el && el.value;
 }

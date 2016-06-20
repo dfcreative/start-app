@@ -239,6 +239,7 @@ i svg {
 	.params {
 		left: auto;
 		top: 3rem;
+		min-height: 2rem;
 		bottom: auto;
 		width: 17rem;
 		max-width: 25vw;
