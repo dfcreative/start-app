@@ -1,6 +1,6 @@
 {
   "name": "start-app",
-  "version": "1.3.6",
+  "version": "1.3.7",
   "description": "Create demo page for an audio-component",
   "main": "index.js",
   "scripts": {
