@@ -521,10 +521,8 @@ StartApp.prototype.update = function (opts) {
 	}
 
 	if (this.params) {
-		this.paramsEl.removeAttribute('hidden');
 		this.paramsBtn.removeAttribute('hidden');
 	} else {
-		this.paramsEl.setAttribute('hidden', true);
 		this.paramsBtn.setAttribute('hidden', true);
 	}
 
