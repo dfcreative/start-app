@@ -545,13 +545,16 @@ StartApp.prototype.setColor = function (color) {
 		var values = parsed.values;
 	}
 	this.colorValues = values;
-	var inverseValues = values.map((v) => 255 - v).map((v) => v * ( isDark ? .2 : 1.8)).map((v) => Math.max(Math.min(v, 255), 0)).map((v) => isDark ? v*.1 : 255*.9+v*.1);
+
+	var yiq = (values[0] * 299 + values[1] * 587 + values[2] * 114) / (1000);
+	var isDark = yiq < 128;
+
+	var inverseValues = values.map((v) => 255 - v).map((v) => v * ( !isDark ? .2 : 1.8)).map((v) => Math.max(Math.min(v, 255), 0)).map((v) => !isDark ? v*.1 : 255*.9+v*.1);
 	this.color = `rgba(${values.join(', ')}, ${parsed.alpha})`;
 	this.inverseColor = `rgba(${inverseValues.map(v => v.toFixed(0)).join(', ')}, ${parsed.alpha})`;
 	this.transparentColor = `rgba(${values.join(', ')}, 0.1)`;
 	this.semiTransparentColor = `rgba(${values.join(', ')}, 0.25)`;
 
-	var isDark = values[0] + values[1] + values[2] > 1.5;
 	var semiTransparentInverseColor = `rgba(${inverseValues.map(v => v.toFixed(0)).join(', ')}, .75)`;
 
 	this.styleEl.innerHTML = `

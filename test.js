@@ -54,9 +54,9 @@ demo.on('ready', (node) => console.log(node));
 
 setTimeout(() => {
 	demo.setColor('green');
-	console.log(demo.getParamValue('select'));
-	console.log(demo.getParamValue('checkbox'));
-	console.log(demo.getParamValue('text'));
+	// console.log(demo.getParamValue('select'));
+	// console.log(demo.getParamValue('checkbox'));
+	// console.log(demo.getParamValue('text'));
 	demo.addParam('xyz', {
 		value: true
 	}, (v) => console.log(v))
