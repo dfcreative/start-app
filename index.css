@@ -235,16 +235,6 @@ i svg {
 	box-shadow: 0 0 1px 0;
 	z-index: 999;
 }
-@media (min-width: 42rem) {
-	.params {
-		left: auto;
-		top: 3rem;
-		min-height: 2rem;
-		bottom: auto;
-		width: 17rem;
-		max-width: 25vw;
-	}
-}
 .params-close {
 	position: absolute;
 	top: 0;
@@ -258,7 +248,17 @@ i svg {
 
 .param {
 	height: 2rem;
+	width: 13rem;
+	margin-right: 5rem;
 	margin-bottom: .5rem;
+	float: left;
+}
+
+@media (max-width: 42rem) {
+	.param {
+		width: 100%;
+		float: none;
+	}
 }
 
 .param-label {
