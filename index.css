@@ -228,7 +228,7 @@ i svg {
 	right: 0;
 	left: 0;
 	margin: auto;
-	padding: .5rem 0 .5rem .25rem;
+	padding: .5rem 0 .5rem .75rem;
 	line-height: 1.5;
 	max-height: 82vh;
 	max-width: 100%;
@@ -247,8 +247,8 @@ i svg {
 
 .param {
 	height: 2rem;
-	width: 14.75rem;
-	margin-right: 2.25rem;
+	width: 15rem;
+	margin-right: 1.5rem;
 	float: left;
 }
 
