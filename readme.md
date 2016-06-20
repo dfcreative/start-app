@@ -124,15 +124,17 @@ app.on('ready', (audioNode) => {});
 
 //WIP--------
 //called when any of settings changed
-app.on('change', (name, value) => {});
+app.on('change', (name, value, state) => {});
 
 //creating parameters
-app.addParam(opts);
-app.addSelect(name, opts);
-app.addRange(name, opts);
-app.addCheckbox(name, opts);
-app.addNumber(name, opts);
-app.addText(name, opts);
+app.addParam({
+	name: 'my-number-param',
+	type: 'range',
+	value: 0,
+	min: 0,
+	max: 100,
+	step: 1
+});
 ```
 
 ## Inspired by

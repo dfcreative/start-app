@@ -18,7 +18,32 @@ var demo = createDemo({
 	// microphone: true,
 	autoplay: false,
 	fps: true,
-	params: true
+	params: [
+		{
+			name: 'range',
+			type: 'range'
+		},
+		{
+			name: 'text'
+		},
+		{
+			name: 'checkbox',
+			type: 'checkbox'
+		},
+		{
+			name: 'number',
+			type: 'number'
+		},
+		{
+			name: 'select',
+			type: 'select',
+			values: {
+				'inferno': 'inferno',
+				'plasma': 'plasma'
+			},
+			value: 'inferno'
+		}
+	]
 	// forkme: 'https://github.com/audio-lab',
 	// donate: '',
 	// orientation: 'horizontal'

@@ -264,6 +264,15 @@ function StartApp (opts, cb) {
 	this.paramsEl = document.createElement('div');
 	this.paramsEl.classList.add('params');
 	this.paramsEl.setAttribute('hidden', true);
+	this.paramsEl.innerHTML = `
+		No params defined yet.<br/>
+		Set them via 'addParam' method.
+	`;
+	if (this.params && this.params !== true) this.paramsEl.innerHTML = ``;
+	this.paramsEl.innerHTML += `<a class="params-close" href="#close-params"><i class="icon-close">╳</i></a>`
+	for (var param in this.params) {
+		this.addParam(this.params[param]);
+	}
 	this.container.appendChild(this.paramsEl);
 
 	//params button
@@ -273,6 +282,23 @@ function StartApp (opts, cb) {
 	this.paramsBtn.innerHTML = `<i>${this.icons.settings}</i>`;
 	this.paramsBtn.setAttribute('hidden', true);
 	this.statusEl.appendChild(this.paramsBtn);
+
+	this.paramsBtn.addEventListener('click', () => {
+		if (this.paramsEl.hasAttribute('hidden')) {
+			this.paramsEl.removeAttribute('hidden');
+		}
+		else {
+			this.paramsEl.setAttribute('hidden', true);
+		}
+	});
+	this.paramsEl.querySelector('.params-close').addEventListener('click', () => {
+		if (this.paramsEl.hasAttribute('hidden')) {
+			this.paramsEl.removeAttribute('hidden');
+		}
+		else {
+			this.paramsEl.setAttribute('hidden', true);
+		}
+	});
 
 
 	//enable update routine
@@ -812,38 +838,90 @@ StartApp.prototype.getTime = function (time) {
 }
 
 
-/** Settings functions */
-StartApp.prototype.addParam = function (opts) {
-
-};
-StartApp.prototype.addText = function (opts) {
-
-};
-StartApp.prototype.addSelect = function (opts) {
-
-};
-StartApp.prototype.addRange = function (opts) {
+/** Create param based off options */
+StartApp.prototype.addParam = function (opts, cb) {
 	opts = opts || {};
-	var rangeEl = document.createElement('input');
+	var type = opts.type || 'text';
+
+	var el = document.createElement('div');
+	el.classList.add('param');
 	var title = opts.name.slice(0,1).toUpperCase() + opts.name.slice(1);
-	rangeEl.type = 'range';
-	rangeEl.min = opts.min || 0;
-	rangeEl.max = opts.max || 1;
-	rangeEl.step = opts.step || 0.01;
-	rangeEl.value = opts.value || 0.5;
-	rangeEl.classList.add(opts.name);
-	rangeEl.title = title + ': ' + rangeEl.value;
-	rangeEl.addEventListener('input', function () {
-		var v = parseFloat(rangeEl.value);
-		rangeEl.title = title + ': ' + v;
-		cb(v);
+	el.innerHTML = `<label for="${opts.name}" class="param-label">${title}</label>`;
+
+	switch (opts.type) {
+		case 'select':
+			opts = extend({
+				values: {},
+				name: 'noname-select'
+			}, opts);
+			var html = `<select
+				id="${opts.name}" class="param-input param-select" title="${opts.value}">`;
+			for (var name in opts.values) {
+				html += `<option value="${opts.values[name]}" ${opts.values[name] === opts.value ? 'selected' : ''}>${name}</option>`
+			}
+			html += `</select>`;
+
+			el.innerHTML +=	html;
+			break;
+
+		case 'range':
+			opts = extend({
+				min: 0,
+				max: 1,
+				step: 0.01,
+				value: .5,
+				name: 'noname-range'
+			}, opts);
+			el.innerHTML += `<input
+				id="${opts.name}" type="range" class="param-input param-range" value="${opts.value}" min="${opts.min}" max="${opts.max}" step="${opts.step}" title="${opts.value}"/>
+			`;
+			break;
+
+
+		case 'checkbox':
+			opts = extend({
+				value: false,
+				name: 'noname-checkbox'
+			}, opts);
+			el.innerHTML += `<input
+				id="${opts.name}" type="checkbox" class="param-input param-checkbox" title="${opts.value}" ${opts.value ? 'checked' : ''}/>
+			`;
+			break;
+
+		case 'number':
+			opts = extend({
+				min: 0,
+				max: 1,
+				step: 0.01,
+				value: .5,
+				name: 'noname-number'
+			}, opts);
+			el.innerHTML += `<input
+				id="${opts.name}" type="number" class="param-input param-number" value="${opts.value}" min="${opts.min}" max="${opts.max}" step="${opts.step}" title="${opts.value}"/>
+			`;
+			break;
+
+		default:
+			opts = extend({
+				name: 'noname-text',
+				value: ''
+			}, opts);
+			el.innerHTML += `<input placeholder="value..." id="${opts.name}" class="param-input param-text" value="${opts.value}" title="${opts.value}"/>
+			`;
+			break;
+
+	}
+
+	opts.element = el;
+
+	var self = this;
+	el.querySelector('input, select').addEventListener('input', function () {
+		var v = this.value;
+		this.title = v;
+		cb && cb(v);
+		self.emit('change', opts.name, v, opts);
 	});
-	return rangeEl;
-};
-StartApp.prototype.addCheckbox = function (opts) {
+	this.paramsEl.appendChild(el);
 
+	return el;
 };
-StartApp.prototype.addNumber = function ( opts) {
-
-};
-
