@@ -851,7 +851,9 @@ StartApp.prototype.addParam = function (opts, cb) {
 	var el = document.createElement('div');
 	el.classList.add('param');
 	var title = opts.name.slice(0,1).toUpperCase() + opts.name.slice(1);
-	el.innerHTML = `<label for="${opts.name}" class="param-label">${title}</label>`;
+	var name = opts.name.toLowerCase();
+	name = name.replace(/\s/g, '-');
+	el.innerHTML = `<label for="${name}" class="param-label">${title}</label>`;
 
 	switch (opts.type) {
 		case 'select':
@@ -860,7 +862,7 @@ StartApp.prototype.addParam = function (opts, cb) {
 				name: 'noname-select'
 			}, opts);
 			var html = `<select
-				id="${opts.name}" class="param-input param-select" title="${opts.value}">`;
+				id="${name}" class="param-input param-select" title="${opts.value}">`;
 			for (var name in opts.values) {
 				html += `<option value="${opts.values[name]}" ${opts.values[name] === opts.value ? 'selected' : ''}>${name}</option>`
 			}
@@ -921,7 +923,7 @@ StartApp.prototype.addParam = function (opts, cb) {
 
 	var self = this;
 	el.querySelector('input, select').addEventListener('input', function () {
-		var v = this.value;
+		var v = this.type === 'checkbox' ? this.checked : this.value;
 		this.title = v;
 		cb && cb(v);
 		self.emit('change', opts.name, v, opts);
@@ -930,3 +932,10 @@ StartApp.prototype.addParam = function (opts, cb) {
 
 	return el;
 };
+
+//return value of defined param
+StartApp.prototype.getParamValue = function (name) {
+	var el = this.paramsEl.querySelector('#' + name.toLowerCase());
+
+	return el && el.type === 'checkbox' ? el.checked : el.value;
+}

@@ -135,6 +135,7 @@ app.addParam({
 	max: 100,
 	step: 1
 });
+app.getParamValue('my-param');
 ```
 
 ## Inspired by
