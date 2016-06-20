@@ -43,6 +43,7 @@
     "is-mobile": "^0.2.2",
     "is-url": "^1.2.1",
     "left-pad": "^1.1.0",
+    "mutype": "^0.3.9",
     "raf": "^3.2.0",
     "right-now": "^1.0.0",
     "sheetify": "^5.0.0",

@@ -82,14 +82,14 @@ var app = createDemo({
 				inferno: 'inferno',
 				plasma: 'plasma'
 			},
-			value: 'cdom'
+			value: 'cdom',
+			change: function (value) {}
 		},
 		{
-			name: '',
-			label: '',
+			name: 'Text param',
 			type: 'text',
-			placeholder: '',
-			value:''
+			placeholder: 'some value',
+			value:'',
 		}
 	]
 });
@@ -127,14 +127,13 @@ app.on('ready', (audioNode) => {});
 app.on('change', (name, value, state) => {});
 
 //creating parameters
-app.addParam({
-	name: 'my-number-param',
+app.addParam('my-param', {
 	type: 'range',
 	value: 0,
 	min: 0,
 	max: 100,
 	step: 1
-});
+}, function onchange (value) {});
 app.getParamValue('my-param');
 ```
 

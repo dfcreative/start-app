@@ -17,6 +17,7 @@ var xhr = require('xhr');
 var isUrl = require('is-url');
 var ctx = require('audio-context');
 var Draggable = require('draggy');
+var isPlainObject = require('mutype/is-object');
 
 module.exports = StartApp;
 
@@ -844,9 +845,27 @@ StartApp.prototype.getTime = function (time) {
 
 
 /** Create param based off options */
-StartApp.prototype.addParam = function (opts, cb) {
-	opts = opts || {};
+StartApp.prototype.addParam = function (name, opts, cb) {
+	if (isPlainObject(name)) {
+		cb = opts;
+		opts = name;
+		name = opts.name;
+	}
+	if (opts instanceof Function) {
+		cb = opts;
+		opts = {};
+	}
+
+	if (!isPlainObject(opts)) {
+		opts = {value: opts}
+	}
+
+	if (typeof name === 'string') {
+		opts.name = name;
+	}
+
 	var type = opts.type || 'text';
+	cb = cb || opts.change || opts.cb;
 
 	var el = document.createElement('div');
 	el.classList.add('param');
@@ -854,6 +873,18 @@ StartApp.prototype.addParam = function (opts, cb) {
 	var name = opts.name.toLowerCase();
 	name = name.replace(/\s/g, '-');
 	el.innerHTML = `<label for="${name}" class="param-label">${title}</label>`;
+
+	if (!opts.type) {
+		if (opts.values) {
+			opts.type = 'select';
+		}
+		else if (opts.min || opts.max || opts.step || typeof opts.value === 'number') {
+			opts.type = 'range';
+		}
+		else if (typeof opts.value === 'boolean') {
+			opts.type = 'checkbox';
+		}
+	}
 
 	switch (opts.type) {
 		case 'select':
@@ -863,8 +894,15 @@ StartApp.prototype.addParam = function (opts, cb) {
 			}, opts);
 			var html = `<select
 				id="${name}" class="param-input param-select" title="${opts.value}">`;
-			for (var name in opts.values) {
-				html += `<option value="${opts.values[name]}" ${opts.values[name] === opts.value ? 'selected' : ''}>${name}</option>`
+			if (Array.isArray(opts.values)) {
+				for (var i = 0; i < opts.values.length; i++) {
+					html += `<option value="${opts.values[i]}" ${opts.values[i] === opts.value ? 'selected' : ''}>${opts.values[i]}</option>`
+				}
+			}
+			else {
+				for (var name in opts.values) {
+					html += `<option value="${opts.values[name]}" ${opts.values[name] === opts.value ? 'selected' : ''}>${name}</option>`
+				}
 			}
 			html += `</select>`;
 
@@ -922,12 +960,16 @@ StartApp.prototype.addParam = function (opts, cb) {
 	opts.element = el;
 
 	var self = this;
-	el.querySelector('input, select').addEventListener('input', function () {
+	el.querySelector('input, select').addEventListener('input', change);
+	el.querySelector('input, select').addEventListener('change', change);
+
+	function change () {
 		var v = this.type === 'checkbox' ? this.checked : this.value;
 		this.title = v;
 		cb && cb(v);
 		self.emit('change', opts.name, v, opts);
-	});
+	};
+
 	this.paramsEl.appendChild(el);
 
 	return el;
