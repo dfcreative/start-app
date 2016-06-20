@@ -980,9 +980,9 @@ StartApp.prototype.addParam = function (name, opts, cb) {
 	el.querySelector('input, select').addEventListener('change', change);
 
 	function change () {
-		var v = this.type === 'checkbox' ? this.checked : this.value;
+		var v = this.type === 'checkbox' ? this.checked : (this.type === 'number' || this.type === 'range') ? parseFloat(this.value) : this.value;
 		this.title = v;
-		cb && cb(v);
+		cb && cb.call(self, v, opts);
 		self.emit('change', opts.name, v, opts);
 	};
 
