@@ -545,7 +545,7 @@ StartApp.prototype.setColor = function (color) {
 		var values = parsed.values;
 	}
 	this.colorValues = values;
-	var inverseValues = values.map((v) => 255 - v).map((v) => v * ( isDark ? .2 : 1.8)).map((v) => Math.max(Math.min(v, 255), 0));
+	var inverseValues = values.map((v) => 255 - v).map((v) => v * ( isDark ? .2 : 1.8)).map((v) => Math.max(Math.min(v, 255), 0)).map((v) => isDark ? v*.1 : 255*.9+v*.1);
 	this.color = `rgba(${values.join(', ')}, ${parsed.alpha})`;
 	this.inverseColor = `rgba(${inverseValues.map(v => v.toFixed(0)).join(', ')}, ${parsed.alpha})`;
 	this.transparentColor = `rgba(${values.join(', ')}, 0.1)`;
@@ -570,7 +570,7 @@ StartApp.prototype.setColor = function (color) {
 		}
 
 		.${className} .params {
-			background: linear-gradient(to bottom, ${this.inverseColor}, ${semiTransparentInverseColor});
+			background: linear-gradient(to bottom, ${semiTransparentInverseColor}, ${this.inverseColor});
 		}
 
 		.${className} .params-button {
