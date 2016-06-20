@@ -573,7 +573,7 @@ StartApp.prototype.setColor = function (color) {
 		}
 
 		.${className} .params {
-			background: linear-gradient(to bottom, rgba(${inverseValues.map(v => v.toFixed(0)).join(', ')}, .55), rgba(${inverseValues.map(v => v.toFixed(0)).join(', ')}, .75));
+			background: linear-gradient(to bottom, rgba(${inverseValues.map(v => v.toFixed(0)).join(', ')}, .5), rgba(${inverseValues.map(v => v.toFixed(0)).join(', ')}, .75));
 		}
 
 		.${className} .params-button {

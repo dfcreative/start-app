@@ -232,7 +232,6 @@ i svg {
 	line-height: 1.5;
 	max-height: 82vh;
 	max-width: 100%;
-	box-shadow: 0 0 1px 0;
 	z-index: 999;
 }
 .params-close {
@@ -243,14 +242,13 @@ i svg {
 	width: 2rem;
 	text-align: center;
 	line-height: 2rem;
-	font-size: 1.2rem;
+	font-size: 1rem;
 }
 
 .param {
 	height: 2rem;
 	width: 13rem;
 	margin-right: 5rem;
-	margin-bottom: .5rem;
 	float: left;
 }
 
@@ -258,6 +256,7 @@ i svg {
 	.param {
 		width: 100%;
 		float: none;
+		margin-bottom: .5rem;
 	}
 }
 
