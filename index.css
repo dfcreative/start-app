@@ -222,19 +222,27 @@ i svg {
 
 
 .params {
-	background: linear-gradient(to bottom, rgba(255,255,255,.66), white);
+	background: linear-gradient(to bottom, rgba(255,255,255,.75), white);
 	position: fixed;
 	bottom: 0;
 	right: 0;
 	left: 0;
-	width: 40rem;
 	margin: auto;
-	padding: 1.5rem 2.25rem .5rem 1.25rem;
+	padding: 1rem 2.25rem .5rem 1.25rem;
 	line-height: 1.5;
 	max-height: 82vh;
 	max-width: 100%;
 	box-shadow: 0 0 1px 0;
 	z-index: 999;
+}
+@media (min-width: 42rem) {
+	.params {
+		left: auto;
+		top: 3rem;
+		bottom: auto;
+		width: 17rem;
+		max-width: 25vw;
+	}
 }
 .params-close {
 	position: absolute;
@@ -244,7 +252,7 @@ i svg {
 	width: 2rem;
 	text-align: center;
 	line-height: 2rem;
-	font-size: .666rem;
+	font-size: 1.2rem;
 }
 
 .param {

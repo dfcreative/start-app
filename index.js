@@ -16,6 +16,7 @@ var isMobile = require('is-mobile')();
 var xhr = require('xhr');
 var isUrl = require('is-url');
 var ctx = require('audio-context');
+var Draggable = require('draggy');
 
 module.exports = StartApp;
 
@@ -269,7 +270,7 @@ function StartApp (opts, cb) {
 		Set them via 'addParam' method.
 	`;
 	if (this.params && this.params !== true) this.paramsEl.innerHTML = ``;
-	this.paramsEl.innerHTML += `<a class="params-close" href="#close-params"><i class="icon-close">╳</i></a>`
+	this.paramsEl.innerHTML += `<a class="params-close" href="#close-params"><i class="icon-close">✕</i></a>`
 	for (var param in this.params) {
 		this.addParam(this.params[param]);
 	}
@@ -299,6 +300,10 @@ function StartApp (opts, cb) {
 			this.paramsEl.setAttribute('hidden', true);
 		}
 	});
+
+	if (!isMobile) {
+		this.draggable = Draggable(this.paramsEl);
+	}
 
 
 	//enable update routine

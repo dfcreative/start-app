@@ -37,6 +37,7 @@
     "brfs": "^1.4.3",
     "color-parse": "^1.1.0",
     "color-space": "^1.14.3",
+    "draggy": "^1.6.3",
     "inherits": "^2.0.1",
     "insert-css": "^0.2.0",
     "is-mobile": "^0.2.2",

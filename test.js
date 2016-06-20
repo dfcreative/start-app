@@ -21,7 +21,8 @@ var demo = createDemo({
 	params: [
 		{
 			name: 'range',
-			type: 'range'
+			type: 'range',
+			value: .1
 		},
 		{
 			name: 'text'
