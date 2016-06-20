@@ -16,7 +16,6 @@ var isMobile = require('is-mobile')();
 var xhr = require('xhr');
 var isUrl = require('is-url');
 var ctx = require('audio-context');
-var Draggable = require('draggy');
 var isPlainObject = require('mutype/is-object');
 
 module.exports = StartApp;
@@ -266,6 +265,9 @@ function StartApp (opts, cb) {
 	if (isPlainObject(this.params)) {
 		var params = [];
 		for (var name in this.params) {
+			if (!isPlainObject(this.params[name])) {
+				this.params[name] = {value: this.params[name]};
+			}
 			this.params[name].name = name;
 			params.push(this.params[name]);
 		}
@@ -310,10 +312,6 @@ function StartApp (opts, cb) {
 			this.paramsEl.setAttribute('hidden', true);
 		}
 	});
-
-	if (!isMobile) {
-		this.draggable = Draggable(this.paramsEl);
-	}
 
 
 	//enable update routine
