@@ -4,6 +4,7 @@
   "description": "Create demo page for an audio-component",
   "main": "index.js",
   "scripts": {
+    "build": "browserify test.js -t bubleify -o demo/index.js",
     "test": "budo test -- -t bubleify",
     "test:browser": "budo test -- -t bubleify"
   },
@@ -40,7 +41,6 @@
     "draggy": "^1.6.3",
     "get-float-time-domain-data": "^0.1.0",
     "inherits": "^2.0.1",
-    "insert-css": "^0.2.0",
     "is-mobile": "^0.2.2",
     "is-url": "^1.2.1",
     "left-pad": "^1.1.0",

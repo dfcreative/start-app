@@ -689,14 +689,14 @@ StartApp.prototype.setSource = function (src, cb) {
 					uri: `https://api.soundcloud.com/resolve.json?client_id=${this.token.soundcloud || this.token}&url=${src}&_status_code_map[302]=200&format=json`,
 					method: 'GET'
 				}, function (err, response) {
-					if (err) return badURL(err);
+					if (err) return showError(err);
 
 					var obj = JSON.parse(response.body);
 					xhr({
 						uri: obj.location,
 						method: 'GET'
 					}, function (err, response) {
-						if (err) return badURL(err);
+						if (err) return showError(err);
 
 						var json = JSON.parse(response.body);
 
@@ -712,7 +712,7 @@ StartApp.prototype.setSource = function (src, cb) {
 				method: 'GET'
 			}, (err, response) => {
 				if (err) {
-					return badURL(err);
+					return showError(err);
 				}
 
 				var json = JSON.parse(response.body);
@@ -764,12 +764,7 @@ StartApp.prototype.setSource = function (src, cb) {
 				self.sourceTitle.innerHTML = `loading ${titleHtml}`;
 			})
 			.on('error', (err) => {
-				self.sourceTitle.innerHTML = err;
-				self.sourceIcon.setAttribute('title', self.sourceTitle.textContent);
-				self.sourceIcon.innerHTML = self.icons.error;
-				setTimeout(() => {
-					cb && cb(err);
-				}, 3000);
+				showError(err);
 			})
 		}
 	}
@@ -790,42 +785,53 @@ StartApp.prototype.setSource = function (src, cb) {
 	//default url
 	else {
 		// if (!isUrl(src)) {
-		// 	badURL();
+		// 	showError();
 		// 	return this;
 		// }
 
-		self.source = src;
+		self.sourceIcon.innerHTML = self.icons.loading;
+		self.sourceTitle.innerHTML = `loading ${src}`;
 
-		self.sourceTitle.innerHTML = `
-			<a class="source-link" href="${src}" target="_blank" title="Open ${src}"><span class="text-length-limiter">${src}</span></a>
-		`;
-		self.sourceIcon.setAttribute('title', self.sourceTitle.textContent);
+		//FIXME: avoid this double-request
+		xhr({
+			uri: src
+		}, (err, resp) => {
+			if (err) return showError(err);
+			if (resp.statusCode !== 200) return showError(src + ' not found');
 
-		// self.audio.src = src;
-		self.player = createPlayer(src, {
-			context: self.context,
-			loop: self.loop,
-			buffer: isMobile, //FIXME: this can be always false here i guess
-			crossOrigin: 'Anonymous'
-		}).on('load', () => {
-			self.emit('source', self.player.node, src);
-			cb && cb(null, self.player.node, src);
-			self.autoplay && self.play();
-		}).on('error', () => {
-			badURL(err);
+			// self.audio.src = src;
+			self.player = createPlayer(src, {
+				context: self.context,
+				loop: self.loop,
+				buffer: isMobile, //FIXME: this can be always false here i guess
+				crossOrigin: 'Anonymous'
+			}).on('load', () => {
+				self.source = src;
+
+				self.sourceTitle.innerHTML = `
+					<a class="source-link" href="${src}" target="_blank" title="Open ${src}"><span class="text-length-limiter">${src}</span></a>
+				`;
+				self.sourceIcon.setAttribute('title', self.sourceTitle.textContent);
+				self.playPause && self.audioEl.removeAttribute('hidden');
+				self.stop && self.audioStop.removeAttribute('hidden');
+
+				self.emit('source', self.player.node, src);
+				cb && cb(null, self.player.node, src);
+				self.autoplay && self.play();
+			}).on('error', (err) => {
+				showError(err);
+			});
 		});
 
-		self.playPause && self.audioEl.removeAttribute('hidden');
-		self.stop && self.audioStop.removeAttribute('hidden');
 	}
 
-	function badURL (err) {
+	function showError (err) {
 		self.sourceTitle.innerHTML = err || `bad URL`;
 		self.sourceIcon.setAttribute('title', self.sourceTitle.textContent);
 		self.sourceIcon.innerHTML = self.icons.error;
 		setTimeout(() => {
 			cb && cb('Bad url');
-		}, 1000);
+		}, 1500);
 	}
 
 	return this;
