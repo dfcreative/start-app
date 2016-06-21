@@ -169,7 +169,6 @@ i svg {
 	display: inline-block;
 }
 
-
 .fps-canvas {
 	height: 1rem;
 	width: 2rem;
@@ -189,7 +188,14 @@ i svg {
     display: inline-block;
     margin-left: .5rem;
 }
-
+.github-link {
+    position: fixed;
+    bottom: .75rem;
+    right: .75rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    line-height: 1.5rem;
+}
 
 .audio-playback, .audio-stop {
 	display: inline-block;

@@ -313,6 +313,16 @@ function StartApp (opts, cb) {
 	});
 
 
+	//add gh link
+	if (this.github) {
+		this.ghLink = document.createElement('a');
+		this.ghLink.classList.add('github-link');
+		this.ghLink.href = isUrl(this.github) ? this.github : '//github.com/' + this.github;
+		this.ghLink.innerHTML = `<i>${ this.icons.github }</i>`;
+		this.container.appendChild(this.ghLink);
+	}
+
+
 	//enable update routine
 	raf(function measure () {
 		count++;
@@ -422,6 +432,7 @@ StartApp.prototype.mobile = true;
 //show params button
 StartApp.prototype.params = true;
 
+StartApp.prototype.github = 'dfcreative/start-app';
 
 /**
  * Init settings
