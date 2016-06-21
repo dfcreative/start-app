@@ -17,6 +17,8 @@ var xhr = require('xhr');
 var isUrl = require('is-url');
 var ctx = require('audio-context');
 var isPlainObject = require('mutype/is-object');
+var createPlayer = require('web-audio-player');
+require('get-float-time-domain-data');
 
 module.exports = StartApp;
 
@@ -60,9 +62,9 @@ function StartApp (opts, cb) {
 		metaEl.setAttribute('content', 'yes');
 		(document.head || document.documentElement).appendChild(metaEl);
 
-		setTimeout(() => {
-			window.scrollTo(0, 0);
-		}, 0);
+		// setTimeout(() => {
+		// 	window.scrollTo(0, 0);
+		// }, 0);
 	}
 
 	//create layout
@@ -85,7 +87,7 @@ function StartApp (opts, cb) {
 			</a>
 		</span>
 		<input class="source-input source-input-file" hidden type="file"/>
-		<input placeholder="http://url.to/audio" hidden class="source-input source-input-url" type="url" value="${this.source || ''}"/>
+		<input placeholder="https://soundcloud.com/user/track" hidden class="source-input source-input-url" type="url" value="${this.source || ''}"/>
 		<strong class="source-title" hidden></strong>
 	`;
 	this.sourceTitle = this.sourceEl.querySelector('.source-title');
@@ -174,8 +176,8 @@ function StartApp (opts, cb) {
 			self.stop && self.audioStop.removeAttribute('hidden');
 
 			self.emit('ready', self.micNode);
-			self.emit('source', streamUrl);
-			self.emit('play');
+			self.emit('source', self.micNode, streamUrl);
+			self.emit('play', self.micNode);
 		}
 		function errMic (err) {
 			self.hideInput();
@@ -189,22 +191,17 @@ function StartApp (opts, cb) {
 		}
 	});
 
-	//init audio
-	var audio = this.audio = new Audio();
-	this.audio.loop = this.loop;
-	this.audio.crossOrigin = 'Anonymous';
+
 	this.audioEl = this.sourceEl.querySelector('.audio-playback');
 	this.audioStop = this.sourceEl.querySelector('.audio-stop');
 	this.audioIcon = this.sourceEl.querySelector('.audio-icon');
-	this.audioNode = this.context.createMediaElementSource(this.audio);
-	this.audioNode.connect(this.context.destination);
-	this.audio.addEventListener('canplay', () => {
-		this.emit('ready', this.audioNode);
-		this.source && this.autoplay && this.play();
-	});
+
+
 	this.playPause && this.audioEl.addEventListener('click', (e) => {
 		e.preventDefault();
-		if (this.audio.paused) {
+		if (!this.player) throw Error('Set audio source');
+
+		if (!this.player.playing) {
 			this.play();
 		}
 		else {
@@ -221,12 +218,14 @@ function StartApp (opts, cb) {
 	if (!this.progress) this.progressEl.setAttribute('hidden', true);
 	this.progressEl.setAttribute('title', '00:00');
 	this.container.appendChild(progress);
+
 	setInterval(() => {
-		if (this.audio) {
-			progress.style.width = ((this.audio.currentTime / this.audio.duration * 100) || 0) + '%';
-			progress.setAttribute('title', `${this.getTime(this.audio.currentTime)} / ${this.getTime(this.audio.duration)} played`);
+		var currentTime = this.player && this.player.currentTime || this.player && this.player.element && this.player.element.currentTime || 0;
+		if (this.player && this.player.currentTime) {
+			progress.style.width = ((currentTime / this.player.duration * 100) || 0) + '%';
+			progress.setAttribute('title', `${this.getTime(currentTime)} / ${this.getTime(this.player.duration)} played`);
 		}
-	}, 500)
+	}, 100);
 
 
 	//technical element for fps, params, info etc
@@ -393,7 +392,7 @@ StartApp.prototype.token = {
 StartApp.prototype.fps = true;
 
 //autostart play
-StartApp.prototype.autoplay = true;
+StartApp.prototype.autoplay = !isMobile;
 StartApp.prototype.loop = true;
 
 
@@ -413,7 +412,8 @@ StartApp.prototype.icons = {
 	pause: fs.readFileSync(__dirname + '/image/pause.svg', 'utf8'),
 	stop: fs.readFileSync(__dirname + '/image/stop.svg', 'utf8'),
 	eject: fs.readFileSync(__dirname + '/image/eject.svg', 'utf8'),
-	settings: fs.readFileSync(__dirname + '/image/settings.svg', 'utf8')
+	settings: fs.readFileSync(__dirname + '/image/settings.svg', 'utf8'),
+	github: fs.readFileSync(__dirname + '/image/github.svg', 'utf8')
 };
 
 //do mobile routines like meta, splashscreen etc
@@ -643,12 +643,20 @@ StartApp.prototype.setSource = function (src, cb) {
 
 		this.source = url;
 
-		this.audio.src = url;
+		this.player = createPlayer(url, {
+			context: this.context,
+			loop: this.loop,
+			buffer: isMobile,
+			crossOrigin: 'Anonymous'
+		}).on('load', () => {
+			this.emit('source', this.player.node, url);
+			cb && cb(null, url);
+			this.autoplay && this.play();
+		});
+
 		this.playPause && this.audioEl.removeAttribute('hidden');
 		this.stop && this.audioStop.removeAttribute('hidden');
 
-		this.emit('source', url);
-		cb && cb(null, url);
 
 		return this;
 	}
@@ -705,33 +713,53 @@ StartApp.prototype.setSource = function (src, cb) {
 		function setSoundcloud (json) {
 			var streamUrl = json.stream_url + '?client_id=' + token;
 
-			self.sourceIcon.innerHTML = self.icons.soundcloud;
-
 			//FIXME: play list of tracks properly
 			if (json.tracks) {
 				var id = Math.floor(Math.random() * json.tracks.length);
 				return self.setSource(json.tracks[id].permalink_url, cb);
 			}
 
-			var maxTitle = window.innerWidth * .05;
-			self.sourceTitle.innerHTML = `
-				<a class="source-link" href="${json.permalink_url}" target="_blank" title="${json.title}"><span class="text-length-limiter">${json.title}</span></a>`;
-			self.sourceIcon.setAttribute('title', self.sourceTitle.textContent);
-			if (json.user) {
-				self.sourceTitle.innerHTML += ` by <a class="source-link" href="${json.user.permalink_url}" target="_blank" title="${json.user.username}"><span class="text-length-limiter">${json.user.username}</span></a>
-				`;
-				self.sourceIcon.setAttribute('title', self.sourceTitle.textContent);
-			}
-
 			self.source = streamUrl;
 
-			self.audio.src = streamUrl;
-			self.playPause && self.audioEl.removeAttribute('hidden');
-			self.stop && self.audioStop.removeAttribute('hidden');
+			var titleHtml = `<a class="source-link" href="${json.permalink_url}" target="_blank" title="${json.title}"><span class="text-length-limiter">${json.title}</span></a>`;
+			if (json.user) {
+				titleHtml += ` by <a class="source-link" href="${json.user.permalink_url}" target="_blank" title="${json.user.username}"><span class="text-length-limiter">${json.user.username}</span></a>
+				`;
+			}
 
-			self.emit('source', streamUrl);
+			// self.audio.src = streamUrl;
+			self.player = createPlayer(streamUrl, {
+				context: self.context,
+				loop: self.loop,
+				buffer: isMobile,
+				crossOrigin: 'Anonymous'
+			})
+			.on('load', () => {
+				self.sourceIcon.innerHTML = self.icons.soundcloud;
+				self.sourceTitle.innerHTML = titleHtml;
+				self.sourceIcon.setAttribute('title', self.sourceTitle.textContent);
+				self.emit('source', self.player.node, streamUrl);
+				cb && cb(null, self.player.node, streamUrl);
+				self.autoplay && self.play();
 
-			cb && cb(null, streamUrl);
+				self.playPause && self.audioEl.removeAttribute('hidden');
+				self.stop && self.audioStop.removeAttribute('hidden');
+			})
+			.on('decoding', () => {
+				self.sourceTitle.innerHTML = `decoding ${titleHtml}`;
+			})
+			.on('progress', (e) => {
+				if (e === 0) return;
+				self.sourceTitle.innerHTML = `loading ${titleHtml}`;
+			})
+			.on('error', (err) => {
+				self.sourceTitle.innerHTML = err;
+				self.sourceIcon.setAttribute('title', self.sourceTitle.textContent);
+				self.sourceIcon.innerHTML = self.icons.error;
+				setTimeout(() => {
+					cb && cb(err);
+				}, 3000);
+			})
 		}
 	}
 
@@ -750,31 +778,34 @@ StartApp.prototype.setSource = function (src, cb) {
 
 	//default url
 	else {
-		if (!isUrl(src)) {
-			badURL();
-			return this;
-		}
+		// if (!isUrl(src)) {
+		// 	badURL();
+		// 	return this;
+		// }
 
-		xhr({
-			url: src,
-			method: 'GET',
-		}, (err, resp) => {
-			if (err) return badURL(err);
+		self.source = src;
 
-			//FIXME: here actually possible to handle websockets/stuff, not the stupid method below
-			self.source = src;
+		self.sourceTitle.innerHTML = `
+			<a class="source-link" href="${src}" target="_blank" title="Open ${src}"><span class="text-length-limiter">${src}</span></a>
+		`;
+		self.sourceIcon.setAttribute('title', self.sourceTitle.textContent);
 
-			self.sourceTitle.innerHTML = `
-				<a class="source-link" href="${src}" target="_blank" title="Open ${src}"><span class="text-length-limiter">${src}</span></a>
-			`;
-			self.sourceIcon.setAttribute('title', self.sourceTitle.textContent);
-			self.audio.src = src;
-			self.playPause && self.audioEl.removeAttribute('hidden');
-			self.stop && self.audioStop.removeAttribute('hidden');
-
-			this.emit('source', src);
-			cb && cb(null, src);
+		// self.audio.src = src;
+		self.player = createPlayer(src, {
+			context: self.context,
+			loop: self.loop,
+			buffer: isMobile, //FIXME: this can be always false here i guess
+			crossOrigin: 'Anonymous'
+		}).on('load', () => {
+			self.emit('source', self.player.node, src);
+			cb && cb(null, self.player.node, src);
+			self.autoplay && self.play();
+		}).on('error', () => {
+			badURL(err);
 		});
+
+		self.playPause && self.audioEl.removeAttribute('hidden');
+		self.stop && self.audioStop.removeAttribute('hidden');
 	}
 
 	function badURL (err) {
@@ -815,22 +846,24 @@ StartApp.prototype.hideInput = function () {
  * Play/stop/reset audio
  */
 StartApp.prototype.play = function () {
-	this.audio.play();
 	this.audioEl.title = `Pause`;
 	this.audioIcon.innerHTML = this.icons.pause;
 	this.playPause && this.stop && this.audioStop.setAttribute('hidden', true);
 
-	this.emit('play');
+	if (!this.player) throw Error('Set audio source');
+	this.player.play();
+	this.emit('play', this.player.node);
 
 	return this;
 }
 StartApp.prototype.pause = function () {
-	this.audio.pause();
 	this.audioEl.title = `Play`;
 	this.audioIcon.innerHTML = this.icons.play;
 	this.playPause && this.stop && this.audioStop.removeAttribute('hidden');
 
-	this.emit('pause');
+	if (!this.player) throw Error('Set audio source');
+	this.player.pause();
+	this.emit('pause', this.player.node);
 
 	return this;
 }
@@ -839,19 +872,23 @@ StartApp.prototype.reset = function () {
 	this.sourceTitle.innerHTML = '';
 	this.sourceIcon.setAttribute('title', this.sourceTitle.textContent);
 	this.sourceInputURL.value = '';
-	this.audio.currentTime = 0;
-
-	this.audio.src = '';
-	this.pause();
-	this.audioStop.querySelector('i').innerHTML = this.icons.eject;
-	this.stop && this.audioStop.setAttribute('hidden', true);
 	this.showInput();
+
 
 	if (this.micNode) {
 		this.micNode.disconnect();
 	}
 
-	this.emit('stop');
+	if (!this.player) throw Error('Set audio source');
+	this.pause();
+	this.player.stop();
+	// this.audio.currentTime = 0;
+	// this.audio.src = '';
+
+	this.emit('stop', this.player.node);
+
+	this.audioStop.querySelector('i').innerHTML = this.icons.eject;
+	this.stop && this.audioStop.setAttribute('hidden', true);
 
 	return this;
 }

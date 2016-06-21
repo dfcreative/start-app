@@ -67,6 +67,9 @@ var app = createDemo({
 	//show status icon
 	icon: true,
 
+	//github link
+	github: 'dfcreative/start-app',
+
 	//enable settings menu, optionally with the passed fields
 	params: [
 		{
@@ -94,19 +97,14 @@ var app = createDemo({
 	]
 });
 
-//call to update options
-app.update(opts);
-
-//set color of fonts, icons, fps etc. Better than calling update.
-app.setColor(color);
-
+//called when new source is set, inc. microphone.
+app.on('source', (audioNode, url) => {
+	//do any sort of connection here
+	audioNode.connect(app.context.destination);
+});
 
 //set a new audio source
-app.setSource(url);
-
-//called when new source is set.
-app.on('source', (url) => {});
-
+app.setSource(url, cb(audioNode, url)?);
 
 //control playback & menu - play/pause/stop
 app.play();
@@ -114,15 +112,18 @@ app.pause();
 app.reset();
 
 //called when track is played/paused/stopped
-app.on('play', () => {});
-app.on('pause', () => {});
-app.on('stop', () => {});
-
-//called when ready to play. The audioNode is connected to destination, so reconnect in case of specific sound processing/capturing
-app.on('ready', (audioNode) => {});
+app.on('play', (audioNode) => {});
+app.on('pause', (audioNode) => {});
+app.on('stop', (audioNode) => {});
 
 
-//WIP--------
+//call to update options
+app.update(opts);
+
+//set color of fonts, icons, fps etc. Better than calling update.
+app.setColor(color);
+
+
 //called when any of settings changed
 app.on('change', (name, value, state) => {});
 

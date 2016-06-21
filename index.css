@@ -84,6 +84,7 @@ a {
 	height: 1rem;
 	font-size: .9rem;
 	max-width: 100%;
+	width: 82%;
 	border: none;
 	box-shadow: none;
 	font-weight: bolder;
@@ -156,6 +157,7 @@ i svg {
 }
 .source-title {
 	display: inline;
+	word-break: break-all;
 }
 
 .status {
