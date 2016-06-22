@@ -813,7 +813,7 @@ StartApp.prototype.setSource = function (src, cb) {
 
 				self.sourceIcon.innerHTML = this.icons.url;
 				self.sourceTitle.innerHTML = `
-					<a class="source-link" href="${src}" target="_blank" title="Open ${src}"><span class="text-length-limiter">${src}</span></a>
+					<a class="source-link" href="${src}" target="_blank" title="Open ${src}"><span class="text-length-limiter" style="max-width: 40vw">${src}</span></a>
 				`;
 				self.sourceIcon.setAttribute('title', self.sourceTitle.textContent);
 				self.playPause && self.audioEl.removeAttribute('hidden');

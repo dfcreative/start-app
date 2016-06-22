@@ -189,6 +189,7 @@ i svg {
     margin-left: .5rem;
 }
 .github-link {
+	z-index: 999;
     position: fixed;
     bottom: .75rem;
     right: .75rem;
