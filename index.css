@@ -242,7 +242,7 @@ i svg {
 	max-height: 100vh;
 	max-width: 100%;
 	z-index: 999;
-	overflow: scroll;
+	overflow: auto;
 }
 .params-close {
 	position: absolute;
