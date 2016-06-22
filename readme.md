@@ -79,6 +79,7 @@ var app = createDemo({
 		},
 		{
 			name: 'colormap',
+			label: 'Color map',
 			type: 'select',
 			values: {
 				cdom: 'cdom',
@@ -89,7 +90,8 @@ var app = createDemo({
 			change: function (value) {}
 		},
 		{
-			name: 'Text param',
+			name: 'text-param',
+			label: 'Text Param',
 			type: 'text',
 			placeholder: 'some value',
 			value:'',
@@ -128,6 +130,7 @@ app.setColor(color);
 app.on('change', (name, value, state) => {});
 
 //creating parameters
+app.addParams(list|object);
 app.addParam('my-param', {
 	type: 'range',
 	value: 0,

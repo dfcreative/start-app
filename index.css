@@ -189,7 +189,7 @@ i svg {
     margin-left: .5rem;
 }
 .github-link {
-	z-index: 999;
+	z-index: 998;
     position: fixed;
     bottom: .75rem;
     right: .75rem;
@@ -231,7 +231,7 @@ i svg {
 
 
 .params {
-	background: linear-gradient(to bottom, rgba(255,255,255,.75), white);
+	background: linear-gradient(to bottom, rgba(255,255,255,.85), white);
 	position: fixed;
 	bottom: 0;
 	right: 0;
@@ -239,9 +239,10 @@ i svg {
 	margin: auto;
 	padding: .5rem 0 .5rem .75rem;
 	line-height: 1.5;
-	max-height: 82vh;
+	max-height: 100vh;
 	max-width: 100%;
 	z-index: 999;
+	overflow: scroll;
 }
 .params-close {
 	position: absolute;
@@ -263,7 +264,7 @@ i svg {
 
 @media (max-width: 42rem) {
 	.params {
-		bottom: 2.5rem;
+		/*bottom: 2.5rem;*/
 		padding-right: 2.25rem;
 	}
 	.param {

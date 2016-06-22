@@ -261,30 +261,13 @@ function StartApp (opts, cb) {
 
 
 	//create params template
-	if (isPlainObject(this.params)) {
-		var params = [];
-		for (var name in this.params) {
-			if (!isPlainObject(this.params[name])) {
-				this.params[name] = {value: this.params[name]};
-			}
-			this.params[name].name = name;
-			params.push(this.params[name]);
-		}
-		this.params = true;
-		this.paramsCollection = params;
-	}
-	else if (Array.isArray(this.params)){
-		this.paramsCollection = this.params;
-		this.params = true;
-	}
-	else {
-		this.paramsCollection = [];
-	}
 	this.paramsEl = document.createElement('div');
 	this.paramsEl.classList.add('params');
 	this.paramsEl.setAttribute('hidden', true);
 	this.paramsEl.innerHTML = `<a class="params-close" href="#close-params"><i class="icon-close">✕</i></a>`;
-	this.paramsCollection.forEach((opts) => this.addParam(opts));
+
+	this.addParams(this.params);
+
 	this.container.appendChild(this.paramsEl);
 
 	//params button
@@ -918,7 +901,34 @@ StartApp.prototype.getTime = function (time) {
 }
 
 
+
+
 /** Create param based off options */
+StartApp.prototype.addParams = function (list) {
+	if (isPlainObject(list)) {
+		var params = [];
+		for (var name in list) {
+			if (!isPlainObject(list[name])) {
+				list[name] = {value: list[name]};
+			}
+			list[name].name = name;
+			params.push(list[name]);
+		}
+		this.params = true;
+	}
+	else if (Array.isArray(list)){
+		params = list;
+		this.params = true;
+	}
+	else {
+		params = [];
+	}
+
+	params.forEach((opts) => this.addParam(opts));
+
+	return this;
+}
+
 StartApp.prototype.addParam = function (name, opts, cb) {
 	if (isPlainObject(name)) {
 		cb = opts;
@@ -943,7 +953,8 @@ StartApp.prototype.addParam = function (name, opts, cb) {
 
 	var el = document.createElement('div');
 	el.classList.add('param');
-	var title = opts.name.slice(0,1).toUpperCase() + opts.name.slice(1);
+
+	var title = opts.label || opts.name.slice(0,1).toUpperCase() + opts.name.slice(1);
 	var name = opts.name.toLowerCase();
 	name = name.replace(/\s/g, '-');
 	el.innerHTML = `<label for="${name}" class="param-label">${title}</label>`;
@@ -1054,4 +1065,17 @@ StartApp.prototype.getParamValue = function (name) {
 	var el = this.paramsEl.querySelector('#' + name.toLowerCase());
 
 	return el && el.type === 'checkbox' ? el.checked : el && el.value;
+}
+
+StartApp.prototype.setParamValue = function (name, value) {
+	var el = this.paramsEl.querySelector('#' + name.toLowerCase());
+	if (el.type === 'checkbox') {
+		el.checked = !!value;
+	}
+	else if (el.tagName === 'SELECT') {
+		el.value = value;
+	}
+	else {
+		el.value = value;
+	}
 }
