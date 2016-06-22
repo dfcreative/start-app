@@ -654,6 +654,7 @@ StartApp.prototype.setSource = function (src, cb) {
 
 		this.source = url;
 
+		this.player && this.player.stop();
 		this.player = createPlayer(url, {
 			context: this.context,
 			loop: this.loop,
@@ -739,6 +740,7 @@ StartApp.prototype.setSource = function (src, cb) {
 			}
 
 			// self.audio.src = streamUrl;
+			self.player && self.player.stop();
 			self.player = createPlayer(streamUrl, {
 				context: self.context,
 				loop: self.loop,
@@ -800,6 +802,7 @@ StartApp.prototype.setSource = function (src, cb) {
 			if (resp.statusCode !== 200) return showError(src + ' not found');
 
 			// self.audio.src = src;
+			self.player && self.player.stop();
 			self.player = createPlayer(src, {
 				context: self.context,
 				loop: self.loop,
