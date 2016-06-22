@@ -811,6 +811,8 @@ StartApp.prototype.setSource = function (src, cb) {
 			}).on('load', () => {
 				self.source = src;
 
+				console.log(123)
+				self.sourceIcon.innerHTML = this.icons.record;
 				self.sourceTitle.innerHTML = `
 					<a class="source-link" href="${src}" target="_blank" title="Open ${src}"><span class="text-length-limiter">${src}</span></a>
 				`;
