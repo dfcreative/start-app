@@ -777,37 +777,30 @@ StartApp.prototype.setSource = function (src, cb) {
 		self.sourceIcon.innerHTML = self.icons.loading;
 		self.sourceTitle.innerHTML = `loading ${src}`;
 
-		//FIXME: avoid this double-request
-		xhr({
-			uri: src
-		}, (err, resp) => {
-			if (err) return showError(err);
-			if (resp.statusCode !== 200) return showError(src + ' not found');
 
-			// self.audio.src = src;
-			self.player && self.player.stop();
-			self.player = createPlayer(src, {
-				context: self.context,
-				loop: self.loop,
-				buffer: isMobile, //FIXME: this can be always false here i guess
-				crossOrigin: 'Anonymous'
-			}).on('load', () => {
-				self.source = src;
+		// self.audio.src = src;
+		self.player && self.player.stop();
+		self.player = createPlayer(src, {
+			context: self.context,
+			loop: self.loop,
+			buffer: isMobile, //FIXME: this can be always false here i guess
+			crossOrigin: 'Anonymous'
+		}).on('load', () => {
+			self.source = src;
 
-				self.sourceIcon.innerHTML = this.icons.url;
-				self.sourceTitle.innerHTML = `
-					<a class="source-link" href="${src}" target="_blank" title="Open ${src}"><span class="text-length-limiter" style="max-width: 40vw">${src}</span></a>
-				`;
-				self.sourceIcon.setAttribute('title', self.sourceTitle.textContent);
-				self.playPause && self.audioEl.removeAttribute('hidden');
-				self.stop && self.audioStop.removeAttribute('hidden');
+			self.sourceIcon.innerHTML = this.icons.url;
+			self.sourceTitle.innerHTML = `
+				<a class="source-link" href="${src}" target="_blank" title="Open ${src}"><span class="text-length-limiter" style="max-width: 40vw">${src}</span></a>
+			`;
+			self.sourceIcon.setAttribute('title', self.sourceTitle.textContent);
+			self.playPause && self.audioEl.removeAttribute('hidden');
+			self.stop && self.audioStop.removeAttribute('hidden');
 
-				self.emit('source', self.player.node, src);
-				cb && cb(null, self.player.node, src);
-				self.autoplay && self.play();
-			}).on('error', (err) => {
-				showError(err);
-			});
+			self.emit('source', self.player.node, src);
+			cb && cb(null, self.player.node, src);
+			self.autoplay && self.play();
+		}).on('error', (err) => {
+			showError(err);
 		});
 
 	}
@@ -818,7 +811,7 @@ StartApp.prototype.setSource = function (src, cb) {
 		self.sourceIcon.innerHTML = self.icons.error;
 		setTimeout(() => {
 			cb && cb('Bad url');
-		}, 1500);
+		}, 2000);
 	}
 
 	return this;
