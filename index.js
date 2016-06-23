@@ -302,12 +302,40 @@ function isUndefined(arg) {
 // shim for using process in browser
 
 var process = module.exports = {};
+
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+(function () {
+  try {
+    cachedSetTimeout = setTimeout;
+  } catch (e) {
+    cachedSetTimeout = function () {
+      throw new Error('setTimeout is not defined');
+    }
+  }
+  try {
+    cachedClearTimeout = clearTimeout;
+  } catch (e) {
+    cachedClearTimeout = function () {
+      throw new Error('clearTimeout is not defined');
+    }
+  }
+} ())
 var queue = [];
 var draining = false;
 var currentQueue;
 var queueIndex = -1;
 
 function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
     draining = false;
     if (currentQueue.length) {
         queue = currentQueue.concat(queue);
@@ -323,7 +351,7 @@ function drainQueue() {
     if (draining) {
         return;
     }
-    var timeout = setTimeout(cleanUpNextTick);
+    var timeout = cachedSetTimeout(cleanUpNextTick);
     draining = true;
 
     var len = queue.length;
@@ -340,7 +368,7 @@ function drainQueue() {
     }
     currentQueue = null;
     draining = false;
-    clearTimeout(timeout);
+    cachedClearTimeout(timeout);
 }
 
 process.nextTick = function (fun) {
@@ -352,7 +380,7 @@ process.nextTick = function (fun) {
     }
     queue.push(new Item(fun, args));
     if (queue.length === 1 && !draining) {
-        setTimeout(drainQueue, 0);
+        cachedSetTimeout(drainQueue, 0);
     }
 };
 
@@ -399,7 +427,7 @@ var Emitter = require('events').EventEmitter;
 var inherits = require('inherits');
 var extend = require('xtend/mutable');
 var sf = 0;
-var className = ((require('insert-css')("._4105589f {\r\n\tmin-height: 100vh;\r\n\tmargin: 0;\r\n\tfont-family: sans-serif;\r\n\tbox-sizing: border-box;\r\n}\r\n\r\n._4105589f * {\r\n\tbox-sizing: border-box;\r\n}\r\n\r\n._4105589f a {\r\n\tcolor: inherit;\r\n}\r\n\r\n._4105589f [hidden] {\r\n\tdisplay: none!important;\r\n}\r\n\r\n._4105589f:after {\r\n\tcontent: '';\r\n}\r\n._4105589f.dragover:after {\r\n\tcontent: '⎗';\r\n\tposition: fixed;\r\n\ttop: 0;\r\n\tbottom: 0;\r\n\tleft: 0;\r\n\tright: 0;\r\n\tmargin: auto;\r\n\twidth: 20vh;\r\n\theight: 20vh;\r\n\tz-index: 2;\r\n\tfont-size: 20vh;\r\n\ttext-align: center;\r\n\tline-height: 20vh;\r\n\tdisplay: block;\r\n}\r\n\r\n._4105589f.dragover:before {\r\n\tcontent: '';\r\n\tposition: fixed;\r\n\ttop: 0;\r\n\tleft: 0;\r\n\tright: 0;\r\n\tbottom: 0;\r\n\tmargin: 0;\r\n\tborder: .2rem dashed;\r\n\tz-index: 1;\r\n\tdisplay: block;\r\n}\r\n\r\n._4105589f.dragover .source {\r\n}\r\n\r\n._4105589f.dragover .audio-stop,._4105589f.dragover .audio-playback {\r\n\tdisplay: none;\r\n}\r\n\r\n._4105589f .source, ._4105589f .status {\r\n\tmargin: 0;\r\n\tpadding: 0;\r\n\tposition: fixed;\r\n\ttop: .75rem;\r\n\tleft: .75rem;\r\n\tdisplay: block;\r\n\tline-height: 1.5rem;\r\n\tfont-size: .9rem;\r\n\tmax-width: 100%;\r\n\tborder: none;\r\n\tbox-shadow: none;\r\n\toutline: none;\r\n\tfill: currentColor;\r\n\tz-index: 999;\r\n}\r\n._4105589f .source-input {\r\n\tmargin: 0;\r\n\tpadding: 0;\r\n\tborder: 0;\r\n\tdisplay: inline;\r\n\tvertical-align: baseline;\r\n\tline-height: 1rem;\r\n\theight: 1rem;\r\n\tfont-size: .9rem;\r\n\tmax-width: 100%;\r\n\twidth: 82%;\r\n\tborder: none;\r\n\tbox-shadow: none;\r\n\tfont-weight: bolder;\r\n\toutline: none;\r\n\tbackground: none;\r\n\t-webkit-appearance: none;\r\n\tappearance: none;\r\n\tborder-radius: 0;\r\n\tbox-shadow: 0 2px;\r\n\tcolor: inherit;\r\n}\r\n._4105589f .source-input:focus{\r\n\toutline: none;\r\n}\r\n._4105589f .source-input-file {\r\n\tposition: fixed;\r\n\ttop: 0;\r\n\tleft: 0;\r\n\tbottom: 0;\r\n\tright: 0;\r\n\topacity: 0;\r\n\tborder: none;\r\n\tcursor: pointer;\r\n}\r\n._4105589f .source-input-url {\r\n\tfont-family: sans-serif;\r\n\tfont-weight: bold;\r\n\tmin-width: 40vw;\r\n}\r\n._4105589f .source-input-url:focus {\r\n}\r\n._4105589f input[type=file],\r\n._4105589f input[type=file]::-webkit-file-upload-button {\r\n\tcursor: pointer;\r\n}\r\n._4105589f i {\r\n\tfill: currentColor;\r\n\twidth: 1.5rem;\r\n\theight: 1.5rem;\r\n\tposition: relative;\r\n\tdisplay: inline-block;\r\n\tfont-style: normal;\r\n\tvertical-align: top;\r\n}\r\n._4105589f .source i {\r\n}\r\n._4105589f .source i svg {\r\n\tmargin-bottom: -.52rem;\r\n}\r\n._4105589f i svg {\r\n\tmax-width: 100%;\r\n\tmax-height: 100%;\r\n}\r\n._4105589f .source-link {\r\n\tposition: relative;\r\n\tfont-weight: bold;\r\n\ttext-decoration: none;\r\n\tbox-shadow: 0px 2px;\r\n\twhite-space: nowrap;\r\n\tcursor: pointer;\r\n}\r\n\r\n._4105589f .text-length-limiter {\r\n\tdisplay: inline-block;\r\n\tmax-width: 40vw;\r\n\tvertical-align: top;\r\n\twhite-space: nowrap;\r\n\ttext-overflow: ellipsis;\r\n\toverflow: hidden;\r\n}\r\n._4105589f .source-title {\r\n\tdisplay: inline;\r\n\tword-break: break-all;\r\n}\r\n\r\n._4105589f .status {\r\n\tleft: auto;\r\n\tright: .75rem;\r\n}\r\n\r\n._4105589f .fps {\r\n\tdisplay: inline-block;\r\n}\r\n\r\n._4105589f .fps-canvas {\r\n\theight: 1rem;\r\n\twidth: 2rem;\r\n\tdisplay: inline-block;\r\n\tmargin-right: .15rem;\r\n\tmargin-bottom: -.15rem;\r\n}\r\n\r\n._4105589f .fps-text {\r\n}\r\n\r\n._4105589f .fps-value {\r\n}\r\n\r\n._4105589f .params-button {\r\n    position: relative;\r\n    display: inline-block;\r\n    margin-left: .5rem;\r\n}\r\n._4105589f .github-link {\r\n    position: fixed;\r\n    bottom: .75rem;\r\n    right: .75rem;\r\n    width: 1.5rem;\r\n    height: 1.5rem;\r\n    line-height: 1.5rem;\r\n}\r\n\r\n._4105589f .audio-playback, ._4105589f .audio-stop {\r\n\tdisplay: inline-block;\r\n}\r\n\r\n._4105589f .progress {\r\n\tposition: fixed;\r\n\ttop: 0;\r\n\tleft: 0;\r\n\theight: .2rem;\r\n\tbackground: currentColor;\r\n\ttransition: .1s linear width;\r\n\tz-index: 999;\r\n}\r\n\r\n@media (max-width: 42rem) {\r\n\t._4105589f .text-length-limiter {\r\n\t\tmax-width: 30%;\r\n\t}\r\n\t._4105589f .source {\r\n\t\tright: .75rem;\r\n\t\ttext-align: center;\r\n\t}\r\n\t._4105589f .status {\r\n\t\ttop: auto;\r\n\t\tbottom: .75rem;\r\n\t\tright: .75rem;\r\n\t\tleft: .75rem;\r\n\t\ttext-align: center;\r\n\t}\r\n}\r\n\r\n\r\n._4105589f .params {\r\n\tbackground: linear-gradient(to bottom, rgba(255,255,255,.75), white);\r\n\tposition: fixed;\r\n\tbottom: 0;\r\n\tright: 0;\r\n\tleft: 0;\r\n\tmargin: auto;\r\n\tpadding: .5rem 0 .5rem .75rem;\r\n\tline-height: 1.5;\r\n\tmax-height: 82vh;\r\n\tmax-width: 100%;\r\n\tz-index: 999;\r\n}\r\n._4105589f .params-close {\r\n\tposition: absolute;\r\n\ttop: 0;\r\n\tright: 0;\r\n\theight: 2rem;\r\n\twidth: 2rem;\r\n\ttext-align: center;\r\n\tline-height: 2rem;\r\n\tfont-size: 1rem;\r\n}\r\n\r\n._4105589f .param {\r\n\theight: 2rem;\r\n\twidth: 15rem;\r\n\tmargin-right: 2.25rem;\r\n\tfloat: left;\r\n}\r\n\r\n@media (max-width: 42rem) {\r\n\t._4105589f .params {\r\n\t\tbottom: 2.5rem;\r\n\t\tpadding-right: 2.25rem;\r\n\t}\r\n\t._4105589f .param {\r\n\t\tmargin-right: 0;\r\n\t\twidth: 100%;\r\n\t\tfloat: none;\r\n\t}\r\n}\r\n\r\n._4105589f .param-label {\r\n\tfont-size: .75rem;\r\n\tdisplay: inline-block;\r\n\twidth: 33.3%;\r\n\tline-height: 2rem;\r\n\theight: 2rem;\r\n\tvertical-align: top;\r\n\ttext-align: right;\r\n\tpadding-right: 1rem;\r\n}\r\n._4105589f .param-input {\r\n\twidth: 66.6%;\r\n\theight: 2rem;\r\n\tcolor: inherit;\r\n\tborder: 0;\r\n\tpadding: 0 0;\r\n\tmargin: 0;\r\n\tfont-size: 1rem;\r\n\tbackground: none;\r\n\t/*border-radius: 0;*/\r\n\t/*appearance: none;*/\r\n\t/*-webkit-appearance: none;*/\r\n}\r\n._4105589f .param-range::-webkit-slider-thumb,\r\n._4105589f .param-range::-moz-range-thumb {\r\n\twidth: 2rem;\r\n\theight: 2rem;\r\n}\r\n._4105589f .param-checkbox {\r\n\twidth: 1.5rem;\r\n\theight: 1.5rem;\r\n\tmargin-top: .25rem;\r\n}\r\n@media (max-width: 42rem) {\r\n\t._4105589f .param-checkbox {\r\n\t\tborder: 1px solid;\r\n\t}\r\n}\r\n\r\n._4105589f .param-select {\r\n}\r\n\r\n._4105589f .param-range {\r\n}") || true) && "_4105589f");
+var className = ((require('insert-css')("._7996bfe6 {\r\n\tmin-height: 100vh;\r\n\tmargin: 0;\r\n\tfont-family: sans-serif;\r\n\tbox-sizing: border-box;\r\n}\r\n\r\n._7996bfe6 * {\r\n\tbox-sizing: border-box;\r\n}\r\n\r\n._7996bfe6 a {\r\n\tcolor: inherit;\r\n}\r\n\r\n._7996bfe6 [hidden] {\r\n\tdisplay: none!important;\r\n}\r\n\r\n._7996bfe6:after {\r\n\tcontent: '';\r\n}\r\n._7996bfe6.dragover:after {\r\n\tcontent: '⎗';\r\n\tposition: fixed;\r\n\ttop: 0;\r\n\tbottom: 0;\r\n\tleft: 0;\r\n\tright: 0;\r\n\tmargin: auto;\r\n\twidth: 20vh;\r\n\theight: 20vh;\r\n\tz-index: 2;\r\n\tfont-size: 20vh;\r\n\ttext-align: center;\r\n\tline-height: 20vh;\r\n\tdisplay: block;\r\n}\r\n\r\n._7996bfe6.dragover:before {\r\n\tcontent: '';\r\n\tposition: fixed;\r\n\ttop: 0;\r\n\tleft: 0;\r\n\tright: 0;\r\n\tbottom: 0;\r\n\tmargin: 0;\r\n\tborder: .2rem dashed;\r\n\tz-index: 1;\r\n\tdisplay: block;\r\n}\r\n\r\n._7996bfe6.dragover .source {\r\n}\r\n\r\n._7996bfe6.dragover .audio-stop,._7996bfe6.dragover .audio-playback {\r\n\tdisplay: none;\r\n}\r\n\r\n._7996bfe6 .source, ._7996bfe6 .status {\r\n\tmargin: 0;\r\n\tpadding: 0;\r\n\tposition: fixed;\r\n\ttop: .75rem;\r\n\tleft: .75rem;\r\n\tdisplay: block;\r\n\tline-height: 1.5rem;\r\n\tfont-size: .9rem;\r\n\tmax-width: 100%;\r\n\tborder: none;\r\n\tbox-shadow: none;\r\n\toutline: none;\r\n\tfill: currentColor;\r\n\tz-index: 999;\r\n}\r\n._7996bfe6 .source-input {\r\n\tmargin: 0;\r\n\tpadding: 0;\r\n\tborder: 0;\r\n\tdisplay: inline;\r\n\tvertical-align: baseline;\r\n\tline-height: 1rem;\r\n\theight: 1rem;\r\n\tfont-size: .9rem;\r\n\tmax-width: 100%;\r\n\twidth: 82%;\r\n\tborder: none;\r\n\tbox-shadow: none;\r\n\tfont-weight: bolder;\r\n\toutline: none;\r\n\tbackground: none;\r\n\t-webkit-appearance: none;\r\n\tappearance: none;\r\n\tborder-radius: 0;\r\n\tbox-shadow: 0 2px;\r\n\tcolor: inherit;\r\n}\r\n._7996bfe6 .source-input:focus{\r\n\toutline: none;\r\n}\r\n._7996bfe6 .source-input-file {\r\n\tposition: fixed;\r\n\ttop: 0;\r\n\tleft: 0;\r\n\tbottom: 0;\r\n\tright: 0;\r\n\topacity: 0;\r\n\tborder: none;\r\n\tcursor: pointer;\r\n}\r\n._7996bfe6 .source-input-url {\r\n\tfont-family: sans-serif;\r\n\tfont-weight: bold;\r\n\tmin-width: 40vw;\r\n}\r\n._7996bfe6 .source-input-url:focus {\r\n}\r\n._7996bfe6 input[type=file],\r\n._7996bfe6 input[type=file]::-webkit-file-upload-button {\r\n\tcursor: pointer;\r\n}\r\n._7996bfe6 i {\r\n\tfill: currentColor;\r\n\twidth: 1.5rem;\r\n\theight: 1.5rem;\r\n\tposition: relative;\r\n\tdisplay: inline-block;\r\n\tfont-style: normal;\r\n\tvertical-align: top;\r\n}\r\n._7996bfe6 .source i {\r\n}\r\n._7996bfe6 .source i svg {\r\n\tmargin-bottom: -.52rem;\r\n}\r\n._7996bfe6 i svg {\r\n\tmax-width: 100%;\r\n\tmax-height: 100%;\r\n}\r\n._7996bfe6 .source-link {\r\n\tposition: relative;\r\n\tfont-weight: bold;\r\n\ttext-decoration: none;\r\n\tbox-shadow: 0px 2px;\r\n\twhite-space: nowrap;\r\n\tcursor: pointer;\r\n}\r\n\r\n._7996bfe6 .text-length-limiter {\r\n\tdisplay: inline-block;\r\n\tmax-width: 40vw;\r\n\tvertical-align: top;\r\n\twhite-space: nowrap;\r\n\ttext-overflow: ellipsis;\r\n\toverflow: hidden;\r\n}\r\n._7996bfe6 .source-title {\r\n\tdisplay: inline;\r\n\tword-break: break-all;\r\n}\r\n\r\n._7996bfe6 .status {\r\n\tleft: auto;\r\n\tright: .75rem;\r\n}\r\n\r\n._7996bfe6 .fps {\r\n\tdisplay: inline-block;\r\n}\r\n\r\n._7996bfe6 .fps-canvas {\r\n\theight: 1rem;\r\n\twidth: 2rem;\r\n\tdisplay: inline-block;\r\n\tmargin-right: .15rem;\r\n\tmargin-bottom: -.15rem;\r\n}\r\n\r\n._7996bfe6 .fps-text {\r\n}\r\n\r\n._7996bfe6 .fps-value {\r\n}\r\n\r\n._7996bfe6 .params-button {\r\n    position: relative;\r\n    display: inline-block;\r\n    margin-left: .5rem;\r\n}\r\n._7996bfe6 .github-link {\r\n\tz-index: 998;\r\n    position: fixed;\r\n    bottom: .75rem;\r\n    right: .75rem;\r\n    width: 1.5rem;\r\n    height: 1.5rem;\r\n    line-height: 1.5rem;\r\n}\r\n\r\n._7996bfe6 .audio-playback, ._7996bfe6 .audio-stop {\r\n\tdisplay: inline-block;\r\n}\r\n\r\n._7996bfe6 .progress {\r\n\tposition: fixed;\r\n\ttop: 0;\r\n\tleft: 0;\r\n\theight: .2rem;\r\n\tbackground: currentColor;\r\n\ttransition: .1s linear width;\r\n\tz-index: 999;\r\n}\r\n\r\n@media (max-width: 42rem) {\r\n\t._7996bfe6 .text-length-limiter {\r\n\t\tmax-width: 30%;\r\n\t}\r\n\t._7996bfe6 .source {\r\n\t\tright: .75rem;\r\n\t\ttext-align: center;\r\n\t}\r\n\t._7996bfe6 .status {\r\n\t\ttop: auto;\r\n\t\tbottom: .75rem;\r\n\t\tright: .75rem;\r\n\t\tleft: .75rem;\r\n\t\ttext-align: center;\r\n\t}\r\n}\r\n\r\n\r\n._7996bfe6 .params {\r\n\tbackground: linear-gradient(to bottom, rgba(255,255,255,.85), white);\r\n\tposition: fixed;\r\n\tbottom: 0;\r\n\tright: 0;\r\n\tleft: 0;\r\n\tmargin: auto;\r\n\tpadding: .5rem 0 .5rem .75rem;\r\n\tline-height: 1.5;\r\n\tmax-height: 100vh;\r\n\tmax-width: 100%;\r\n\tz-index: 999;\r\n\toverflow: auto;\r\n}\r\n._7996bfe6 .params-close {\r\n\tposition: absolute;\r\n\ttop: 0;\r\n\tright: 0;\r\n\theight: 2rem;\r\n\twidth: 2rem;\r\n\ttext-align: center;\r\n\tline-height: 2rem;\r\n\tfont-size: 1rem;\r\n}\r\n\r\n._7996bfe6 .param {\r\n\theight: 2rem;\r\n\twidth: 15rem;\r\n\tmargin-right: 2.25rem;\r\n\tfloat: left;\r\n}\r\n\r\n@media (max-width: 42rem) {\r\n\t._7996bfe6 .params {\r\n\t\t/*bottom: 2.5rem;*/\r\n\t\tpadding-right: 2.25rem;\r\n\t}\r\n\t._7996bfe6 .param {\r\n\t\tmargin-right: 0;\r\n\t\twidth: 100%;\r\n\t\tfloat: none;\r\n\t}\r\n}\r\n\r\n._7996bfe6 .param-label {\r\n\tfont-size: .75rem;\r\n\tdisplay: inline-block;\r\n\twidth: 33.3%;\r\n\tline-height: 2rem;\r\n\theight: 2rem;\r\n\tvertical-align: top;\r\n\ttext-align: right;\r\n\tpadding-right: 1rem;\r\n}\r\n._7996bfe6 .param-input {\r\n\twidth: 66.6%;\r\n\theight: 2rem;\r\n\tcolor: inherit;\r\n\tborder: 0;\r\n\tpadding: 0 0;\r\n\tmargin: 0;\r\n\tfont-size: 1rem;\r\n\tbackground: none;\r\n\t/*border-radius: 0;*/\r\n\t/*appearance: none;*/\r\n\t/*-webkit-appearance: none;*/\r\n}\r\n._7996bfe6 .param-range::-webkit-slider-thumb,\r\n._7996bfe6 .param-range::-moz-range-thumb {\r\n\twidth: 2rem;\r\n\theight: 2rem;\r\n}\r\n._7996bfe6 .param-checkbox {\r\n\twidth: 1.5rem;\r\n\theight: 1.5rem;\r\n\tmargin-top: .25rem;\r\n}\r\n@media (max-width: 42rem) {\r\n\t._7996bfe6 .param-checkbox {\r\n\t\tborder: 1px solid;\r\n\t}\r\n}\r\n\r\n._7996bfe6 .param-select {\r\n}\r\n\r\n._7996bfe6 .param-range {\r\n}") || true) && "_7996bfe6");
 
 var raf = require('raf');
 var now = require('right-now');
@@ -636,30 +664,13 @@ function StartApp (opts, cb) {
 
 
 	//create params template
-	if (isPlainObject(this.params)) {
-		var params = [];
-		for (var name in this.params) {
-			if (!isPlainObject(this$1.params[name])) {
-				this$1.params[name] = {value: this$1.params[name]};
-			}
-			this$1.params[name].name = name;
-			params.push(this$1.params[name]);
-		}
-		this.params = true;
-		this.paramsCollection = params;
-	}
-	else if (Array.isArray(this.params)){
-		this.paramsCollection = this.params;
-		this.params = true;
-	}
-	else {
-		this.paramsCollection = [];
-	}
 	this.paramsEl = document.createElement('div');
 	this.paramsEl.classList.add('params');
 	this.paramsEl.setAttribute('hidden', true);
 	this.paramsEl.innerHTML = "<a class=\"params-close\" href=\"#close-params\"><i class=\"icon-close\">✕</i></a>";
-	this.paramsCollection.forEach(function (opts) { return this$1.addParam(opts); });
+
+	this.addParams(this.params);
+
 	this.container.appendChild(this.paramsEl);
 
 	//params button
@@ -995,6 +1006,7 @@ StartApp.prototype.setSource = function (src, cb) {
 
 		this.source = url;
 
+		this.player && this.player.stop();
 		this.player = createPlayer(url, {
 			context: this.context,
 			loop: this.loop,
@@ -1079,6 +1091,7 @@ StartApp.prototype.setSource = function (src, cb) {
 			}
 
 			// self.audio.src = streamUrl;
+			self.player && self.player.stop();
 			self.player = createPlayer(streamUrl, {
 				context: self.context,
 				loop: self.loop,
@@ -1132,33 +1145,28 @@ StartApp.prototype.setSource = function (src, cb) {
 		self.sourceIcon.innerHTML = self.icons.loading;
 		self.sourceTitle.innerHTML = "loading " + src;
 
-		//FIXME: avoid this double-request
-		xhr({
-			uri: src
-		}, function (err, resp) {
-			if (err) return showError(err);
-			if (resp.statusCode !== 200) return showError(src + ' not found');
 
-			// self.audio.src = src;
-			self.player = createPlayer(src, {
-				context: self.context,
-				loop: self.loop,
-				buffer: isMobile, //FIXME: this can be always false here i guess
-				crossOrigin: 'Anonymous'
-			}).on('load', function () {
-				self.source = src;
+		// self.audio.src = src;
+		self.player && self.player.stop();
+		self.player = createPlayer(src, {
+			context: self.context,
+			loop: self.loop,
+			buffer: isMobile, //FIXME: this can be always false here i guess
+			crossOrigin: 'Anonymous'
+		}).on('load', function () {
+			self.source = src;
 
-				self.sourceTitle.innerHTML = "\n\t\t\t\t\t<a class=\"source-link\" href=\"" + src + "\" target=\"_blank\" title=\"Open " + src + "\"><span class=\"text-length-limiter\">" + src + "</span></a>\n\t\t\t\t";
-				self.sourceIcon.setAttribute('title', self.sourceTitle.textContent);
-				self.playPause && self.audioEl.removeAttribute('hidden');
-				self.stop && self.audioStop.removeAttribute('hidden');
+			self.sourceIcon.innerHTML = this$1.icons.url;
+			self.sourceTitle.innerHTML = "\n\t\t\t\t<a class=\"source-link\" href=\"" + src + "\" target=\"_blank\" title=\"Open " + src + "\"><span class=\"text-length-limiter\" style=\"max-width: 40vw\">" + src + "</span></a>\n\t\t\t";
+			self.sourceIcon.setAttribute('title', self.sourceTitle.textContent);
+			self.playPause && self.audioEl.removeAttribute('hidden');
+			self.stop && self.audioStop.removeAttribute('hidden');
 
-				self.emit('source', self.player.node, src);
-				cb && cb(null, self.player.node, src);
-				self.autoplay && self.play();
-			}).on('error', function (err) {
-				showError(err);
-			});
+			self.emit('source', self.player.node, src);
+			cb && cb(null, self.player.node, src);
+			self.autoplay && self.play();
+		}).on('error', function (err) {
+			showError(err);
 		});
 
 	}
@@ -1169,7 +1177,7 @@ StartApp.prototype.setSource = function (src, cb) {
 		self.sourceIcon.innerHTML = self.icons.error;
 		setTimeout(function () {
 			cb && cb('Bad url');
-		}, 1500);
+		}, 2000);
 	}
 
 	return this;
@@ -1252,7 +1260,36 @@ StartApp.prototype.getTime = function (time) {
 }
 
 
+
+
 /** Create param based off options */
+StartApp.prototype.addParams = function (list) {
+	var this$1 = this;
+
+	if (isPlainObject(list)) {
+		var params = [];
+		for (var name in list) {
+			if (!isPlainObject(list[name])) {
+				list[name] = {value: list[name]};
+			}
+			list[name].name = name;
+			params.push(list[name]);
+		}
+		this.params = true;
+	}
+	else if (Array.isArray(list)){
+		params = list;
+		this.params = true;
+	}
+	else {
+		params = [];
+	}
+
+	params.forEach(function (opts) { return this$1.addParam(opts); });
+
+	return this;
+}
+
 StartApp.prototype.addParam = function (name, opts, cb) {
 	if (isPlainObject(name)) {
 		cb = opts;
@@ -1277,7 +1314,8 @@ StartApp.prototype.addParam = function (name, opts, cb) {
 
 	var el = document.createElement('div');
 	el.classList.add('param');
-	var title = opts.name.slice(0,1).toUpperCase() + opts.name.slice(1);
+
+	var title = opts.label || opts.name.slice(0,1).toUpperCase() + opts.name.slice(1);
 	var name = opts.name.toLowerCase();
 	name = name.replace(/\s/g, '-');
 	el.innerHTML = "<label for=\"" + name + "\" class=\"param-label\">" + title + "</label>";
@@ -1380,6 +1418,19 @@ StartApp.prototype.getParamValue = function (name) {
 	var el = this.paramsEl.querySelector('#' + name.toLowerCase());
 
 	return el && el.type === 'checkbox' ? el.checked : el && el.value;
+}
+
+StartApp.prototype.setParamValue = function (name, value) {
+	var el = this.paramsEl.querySelector('#' + name.toLowerCase());
+	if (el.type === 'checkbox') {
+		el.checked = !!value;
+	}
+	else if (el.tagName === 'SELECT') {
+		el.value = value;
+	}
+	else {
+		el.value = value;
+	}
 }
 },{"audio-context":4,"color-parse":8,"color-space/hsl":9,"events":1,"get-float-time-domain-data":12,"inherits":14,"insert-css":15,"is-mobile":18,"is-url":19,"left-pad":20,"mutype/is-object":21,"raf":25,"right-now":26,"web-audio-player":29,"xhr":38,"xtend/mutable":42}],4:[function(require,module,exports){
 var window = require('global/window');
@@ -2525,7 +2576,7 @@ function createBufferSource (src, opt) {
     // Support the same source types as in
     // MediaElement mode...
     if (typeof source.getAttribute === 'function') {
-      source = source.getAttribuet('src')
+      source = source.getAttribute('src')
     } else if (typeof source.src === 'string') {
       source = source.src
     }
@@ -2622,7 +2673,7 @@ module.exports = addOnce
 function addOnce (element, event, fn) {
   function tmp (ev) {
     element.removeEventListener(event, tmp, false)
-    fn()
+    fn(ev, element)
   }
   element.addEventListener(event, tmp, false)
 }
@@ -2666,7 +2717,6 @@ function createMediaSource (src, opt) {
   emitter.element = audio
   emitter.context = audioContext
   emitter.node = node
-
   emitter.pause = audio.pause.bind(audio)
   emitter.play = function () {
     if (opt.autoResume !== false) resume(emitter.context)
@@ -2740,8 +2790,37 @@ function createMediaSource (src, opt) {
   return emitter
 
   function startLoad () {
+    // The file errors (like decoding / 404s) appear on <source>
+    var srcElements = Array.prototype.slice.call(audio.children)
+    var remainingSrcErrors = srcElements.length
+    var hasErrored = false
+    var sourceError = function (err, el) {
+      if (hasErrored) return
+      remainingSrcErrors--
+      console.warn('Error loading source: ' + el.getAttribute('src'))
+      if (remainingSrcErrors <= 0) {
+        hasErrored = true
+        srcElements.forEach(function (el) {
+          el.removeEventListener('error', sourceError, false)
+        })
+        emitter.emit('error', new Error('Could not play any of the supplied sources'))
+      }
+    }
+
     var done = function () {
       emitter.emit('load')
+    }
+
+    if (audio.readyState >= audio.HAVE_ENOUGH_DATA) {
+      process.nextTick(done)
+    } else {
+      addOnce(audio, 'canplay', done)
+      addOnce(audio, 'error', function (ev) {
+        emitter.emit(new Error('Unknown error while loading <audio>'))
+      })
+      srcElements.forEach(function (el) {
+        addOnce(el, 'error', sourceError)
+      })
     }
 
     // On most browsers the loading begins
@@ -2749,15 +2828,6 @@ function createMediaSource (src, opt) {
     // you need to call load() for events
     // to be triggered.
     audio.load()
-
-    if (audio.readyState >= audio.HAVE_ENOUGH_DATA) {
-      process.nextTick(done)
-    } else {
-      addOnce(audio, 'canplay', done)
-      addOnce(audio, 'error', function (err) {
-        emitter.emit('error', err)
-      })
-    }
   }
 }
 
