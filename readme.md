@@ -70,6 +70,9 @@ var app = createDemo({
 	//github link
 	github: 'dfcreative/start-app',
 
+	//reflect params in navigation history
+	history: true,
+
 	//enable settings menu, optionally with the passed fields
 	params: [
 		{

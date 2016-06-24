@@ -18,6 +18,7 @@ var isUrl = require('is-url');
 var ctx = require('audio-context');
 var isPlainObject = require('mutype/is-object');
 var createPlayer = require('web-audio-player');
+var qs = require('querystring');
 require('get-float-time-domain-data');
 
 module.exports = StartApp;
@@ -209,6 +210,7 @@ function StartApp (opts, cb) {
 		}
 	});
 	this.stop && this.audioStop.addEventListener('click', (e) => {
+		e.preventDefault();
 		this.reset();
 	});
 
@@ -266,7 +268,28 @@ function StartApp (opts, cb) {
 	this.paramsEl.setAttribute('hidden', true);
 	this.paramsEl.innerHTML = `<a class="params-close" href="#close-params"><i class="icon-close">✕</i></a>`;
 
+	//init params data
+	this.paramsList = []; //list of params values
+	this.paramsCache = {}; //name: idx
+
+	//extend params with the read history state
+	var params = qs.parse(location.hash.slice(1));
+
 	this.addParams(this.params);
+
+	for (var param in params){
+		var value = params[param];
+		if (value.toLowerCase() === 'false') {
+			value = false;
+		}
+		else if (value.toLowerCase() === 'true') {
+			value = true;
+		}
+		else if (/[-0-9\.]+/.test(value)) {
+			value = parseFloat(value);
+		}
+		this.setParamValue(param, value);
+	}
 
 	this.container.appendChild(this.paramsEl);
 
@@ -278,7 +301,8 @@ function StartApp (opts, cb) {
 	this.paramsBtn.setAttribute('hidden', true);
 	this.statusEl.appendChild(this.paramsBtn);
 
-	this.paramsBtn.addEventListener('click', () => {
+	this.paramsBtn.addEventListener('click', (e) => {
+		e.preventDefault();
 		if (this.paramsEl.hasAttribute('hidden')) {
 			this.paramsEl.removeAttribute('hidden');
 		}
@@ -286,7 +310,8 @@ function StartApp (opts, cb) {
 			this.paramsEl.setAttribute('hidden', true);
 		}
 	});
-	this.paramsEl.querySelector('.params-close').addEventListener('click', () => {
+	this.paramsEl.querySelector('.params-close').addEventListener('click', (e) => {
+		e.preventDefault();
 		if (this.paramsEl.hasAttribute('hidden')) {
 			this.paramsEl.removeAttribute('hidden');
 		}
@@ -330,6 +355,20 @@ function StartApp (opts, cb) {
 		raf(measure);
 	});
 
+	//update history
+	if (this.history) {
+		this._wait = false;
+		this.on('change', () => {
+			if (this._wait) return;
+
+			this.updateHistory();
+
+			this._wait = true;
+			setTimeout(() => {
+				this._wait = false;
+			}, 100);
+		});
+	}
 
 	this.update();
 
@@ -345,6 +384,7 @@ function StartApp (opts, cb) {
 		}
 	});
 }
+
 
 inherits(StartApp, Emitter);
 
@@ -415,7 +455,12 @@ StartApp.prototype.mobile = true;
 //show params button
 StartApp.prototype.params = true;
 
+//show github link
 StartApp.prototype.github = 'dfcreative/start-app';
+
+//track history of params
+StartApp.prototype.history = true;
+
 
 /**
  * Init settings
@@ -518,9 +563,20 @@ StartApp.prototype.update = function (opts) {
 		this.paramsBtn.setAttribute('hidden', true);
 	}
 
+	this.updateHistory();
+
 	return this;
 };
 
+//update hash state
+StartApp.prototype.updateHistory = function () {
+	var params = {};
+	this.paramsList.forEach((param) => {
+		params[param.name] = param.value;
+	});
+
+	location.hash = '#' + qs.stringify(params);
+}
 
 //inner method for setting color
 StartApp.prototype.setColor = function (color) {
@@ -778,7 +834,6 @@ StartApp.prototype.setSource = function (src, cb) {
 		self.sourceTitle.innerHTML = `loading ${src}`;
 
 
-		// self.audio.src = src;
 		self.player && self.player.stop();
 		self.player = createPlayer(src, {
 			context: self.context,
@@ -1041,14 +1096,21 @@ StartApp.prototype.addParam = function (name, opts, cb) {
 	el.querySelector('input, select').addEventListener('input', change);
 	el.querySelector('input, select').addEventListener('change', change);
 
+	opts.idx = this.paramsList.length;
+	this.paramsCache[opts.name] = opts.idx;
+	this.paramsList.push(opts);
+
 	function change () {
 		var v = this.type === 'checkbox' ? this.checked : (this.type === 'number' || this.type === 'range') ? parseFloat(this.value) : this.value;
 		this.title = v;
+		opts.value = v;
 		cb && cb.call(self, v, opts);
 		self.emit('change', opts.name, v, opts);
 	};
 
 	this.paramsEl.appendChild(el);
+
+	this.updateHistory();
 
 	return el;
 };
@@ -1062,6 +1124,9 @@ StartApp.prototype.getParamValue = function (name) {
 
 StartApp.prototype.setParamValue = function (name, value) {
 	var el = this.paramsEl.querySelector('#' + name.toLowerCase());
+
+	if (!el) return;
+
 	if (el.type === 'checkbox') {
 		el.checked = !!value;
 	}
@@ -1071,4 +1136,6 @@ StartApp.prototype.setParamValue = function (name, value) {
 	else {
 		el.value = value;
 	}
+
+	this.paramsList[this.paramsCache[name]].value = value;
 }
