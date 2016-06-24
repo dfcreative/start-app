@@ -459,7 +459,7 @@ StartApp.prototype.params = true;
 StartApp.prototype.github = 'dfcreative/start-app';
 
 //track history of params
-StartApp.prototype.history = true;
+StartApp.prototype.history = false;
 
 
 /**
