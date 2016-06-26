@@ -273,22 +273,26 @@ function StartApp (opts, cb) {
 	this.paramsCache = {}; //name: idx
 
 	//extend params with the read history state
-	var params = qs.parse(location.hash.slice(1));
+	if (this.history) {
+		var params = qs.parse(location.hash.slice(1));
+	}
 
 	this.addParams(this.params);
 
-	for (var param in params){
-		var value = params[param];
-		if (value.toLowerCase() === 'false') {
-			value = false;
+	if (this.history) {
+		for (var param in params){
+			var value = params[param];
+			if (value.toLowerCase() === 'false') {
+				value = false;
+			}
+			else if (value.toLowerCase() === 'true') {
+				value = true;
+			}
+			else if (/[-0-9\.]+/.test(value)) {
+				value = parseFloat(value);
+			}
+			this.setParamValue(param, value);
 		}
-		else if (value.toLowerCase() === 'true') {
-			value = true;
-		}
-		else if (/[-0-9\.]+/.test(value)) {
-			value = parseFloat(value);
-		}
-		this.setParamValue(param, value);
 	}
 
 	this.container.appendChild(this.paramsEl);
@@ -570,6 +574,8 @@ StartApp.prototype.update = function (opts) {
 
 //update hash state
 StartApp.prototype.updateHistory = function () {
+	if (!this.history) return;
+
 	var params = {};
 	this.paramsList.forEach((param) => {
 		params[param.name] = param.value;
