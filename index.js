@@ -113,6 +113,12 @@ function StartApp (opts, cb) {
 			this.showInput();
 		}
 	});
+	this.sourceInputURL.addEventListener('keypress', (e) => {
+		if (e.which === 13) {
+			this.sourceInputURL.blur();
+			this.sourceInputURL.dispatchEvent(new Event('change'));
+		}
+	});
 	this.sourceInputURL.addEventListener('change', (e) => {
 		e.preventDefault();
 		this.hideInput();
@@ -931,7 +937,7 @@ StartApp.prototype.reset = function () {
 	this.source = '';
 	this.sourceTitle.innerHTML = '';
 	this.sourceIcon.setAttribute('title', this.sourceTitle.textContent);
-	this.sourceInputURL.value = '';
+	// this.sourceInputURL.value = '';
 	this.showInput();
 
 

@@ -27,8 +27,8 @@ for (var i = 0; i < N; i++) {
 
 
 var demo = createDemo({
-	source: './sample.mp3',
-	// source: 'https://soundcloud.com/esteban-lara/sets/premieres',
+	// source: './sample.mp3',
+	source: 'https://soundcloud.com/esteban-lara/sets/premieres',
 	url: true,
 	file: true,
 	// mic: true,
