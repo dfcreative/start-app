@@ -147,14 +147,15 @@ StartApp.prototype.init = function (opts, cb) {
 	this.sourceEl.classList.add('source');
 	this.container.appendChild(this.sourceEl);
 
-	//create error container
-	this.errorEl = document.createElement('div');
-	this.errorEl.classList.add('error');
-	this.errorEl.setAttribute('hidden', true);
-	this.errorEl.innerHTML = `<i class="error-icon">${this.icons.error}</i>
-		<span class="error-text"><strong class="error-title">Error</strong></span>`;
-	this.errorTitle = this.errorEl.querySelector('.error-title');
-	this.container.appendChild(this.errorEl);
+	//create error/info container
+	this.infoEl = document.createElement('div');
+	this.infoEl.classList.add('info');
+	this.infoEl.setAttribute('hidden', true);
+	this.infoEl.innerHTML = `<i class="info-icon">${this.icons.error}</i>
+		<span class="info-text"><strong class="info-title">Error</strong></span>`;
+	this.infoTitle = this.infoEl.querySelector('.info-title');
+	this.infoIcon = this.infoEl.querySelector('.info-icon');
+	this.container.appendChild(this.infoEl);
 
 	//create dynamic style
 	this.styleEl = document.createElement('style');
@@ -165,9 +166,10 @@ StartApp.prototype.init = function (opts, cb) {
 
 	//create layout
 	this.sourceEl.innerHTML = `
-		<i class="source-icon" hidden>${this.icons.loading}</i>
+		<i class="source-icon" hidden>${this.icons.record}</i>
 		<span class="source-text"></span>
-		<a href="#audio" class="audio-playback" hidden><i class="audio-icon">${this.icons.play}</i></a><a href="#stop" class="audio-stop" title="Reset" hidden><i class="audio-icon">${this.icons.eject}</i></a>
+		<a href="#audio" class="audio-playback" hidden><i class="audio-icon">${this.icons.play}</i></a>
+		<a href="#stop" class="audio-stop" title="Reset" hidden><i class="audio-icon">${this.icons.eject}</i></a>
 	`;
 	this.sourceIcon = this.sourceEl.querySelector('.source-icon');
 	this.sourceContent = this.sourceEl.querySelector('.source-text');
@@ -216,11 +218,6 @@ StartApp.prototype.init = function (opts, cb) {
 	});
 	this.sourceInputURL.addEventListener('change', (e) => {
 		e.preventDefault();
-		this.hideInput();
-		this.sourceIcon.innerHTML = this.icons.loading;
-		this.sourceTitle.innerHTML = `loading`;
-		this.sourceIcon.setAttribute('title', this.sourceTitle.textContent);
-		this.sourceInputURL.setAttribute('hidden', true);
 		this.setSource(this.sourceInputURL.value);
 	});
 	this.sourceEl.querySelector('.source-link-url').addEventListener('click', (e) => {
@@ -248,10 +245,9 @@ StartApp.prototype.init = function (opts, cb) {
 		}
 
 		function enableMic(stream) {
-			self.hideInput();
-			self.sourceTitle.innerHTML = `Microphone`;
-			self.sourceIcon.setAttribute('title', self.sourceTitle.textContent);
-			self.sourceIcon.innerHTML = self.icons.mic;
+			self.showSource('Microphone', self.icons.mic);
+
+			self.audioEl.setAttribute('hidden', true);
 
 			//an alternative way to start media stream - do not work in chrome
 			var streamUrl = URL.createObjectURL(stream);
@@ -271,13 +267,7 @@ StartApp.prototype.init = function (opts, cb) {
 		}
 		function errMic (err) {
 			self.hideInput();
-			self.sourceTitle.innerHTML = err;//`microphone is not allowed`;
-			self.sourceIcon.setAttribute('title', self.sourceTitle.textContent);
-			self.sourceIcon.innerHTML = self.icons.error;
-			setTimeout(() => {
-				if (!self.source) self.showInput();
-				cb && cb(new Error('Microphone is not allowed'));
-			}, 1000);
+			self.error(err, cb);
 		}
 	});
 
@@ -442,11 +432,15 @@ StartApp.prototype.init = function (opts, cb) {
 	if (this.paste) {
 		this.container.addEventListener('paste', e => {
 			e.preventDefault();
-
-			//FIXME: this returns 0s in some reason
+			//FIXME: this returns files length 0 if pasted an audio
 			var dt = e.clipboardData;
-
-			this.setSource(dt.files);
+			if (/text/.test(dt.types[0])) {
+				var src = dt.getData(dt.types[0]);
+				this.setSource(src);
+			}
+			else {
+				this.setSource(dt.files);
+			}
 		});
 	}
 
@@ -517,18 +511,11 @@ StartApp.prototype.update = function (opts) {
 			this.container.classList.add('dragover');
 			e.dataTransfer.dropEffect = 'copy';
 
-			//save initial values
-			title = this.sourceTitle.innerHTML;
-			icon = this.sourceIcon.innerHTML;
-			isSource = !!this.source;
-
 			var dt = e.dataTransfer;
 			var list = dt.files, src;
 
 			this.hideInput();
-			this.sourceTitle.innerHTML = `drop audio file`;
-			this.sourceIcon.setAttribute('title', this.sourceTitle.textContent);
-			this.sourceIcon.innerHTML = this.icons.record;
+			this.info(`drop audio file`, this.icons.record);
 		});
 
 		this.container.addEventListener('dragleave', (e) => {
@@ -537,9 +524,7 @@ StartApp.prototype.update = function (opts) {
 			target = null;
 			this.container.classList.remove('dragover');
 			if (this.source) {
-				this.sourceTitle.innerHTML = title;
-				this.sourceIcon.setAttribute('title', this.sourceTitle.textContent);
-				this.sourceIcon.innerHTML = icon;
+				this.showSource();
 			}
 			else {
 				this.showInput();
@@ -703,11 +688,7 @@ StartApp.prototype.setSource = function (src, cb) {
 	//File instance case
 	if (src instanceof File) {
 		var url = URL.createObjectURL(src);
-		this.hideInput();
-		this.sourceIcon.innerHTML = this.icons.record;
-		this.sourceTitle.innerHTML = `<a class="source-link" href="${url}" target="_blank" title="${src.name}"><span class="text-length-limiter">${src.name}</span></a>`;
-		this.sourceIcon.setAttribute('title', this.sourceTitle.textContent);
-
+		this.showSource(`<a class="source-link" href="${url}" target="_blank" title="${src.name}"><span class="text-length-limiter">${src.name}</span></a>`, this.icons.record);
 		this.source = url;
 
 		this.player && this.player.stop();
@@ -730,10 +711,7 @@ StartApp.prototype.setSource = function (src, cb) {
 
 
 	if (/soundcloud/.test(src)) {
-		this.hideInput();
-		this.sourceIcon.innerHTML = this.icons.loading;
-		this.sourceTitle.innerHTML = 'connecting to soundcloud';
-		this.sourceIcon.setAttribute('title', this.sourceTitle.textContent);
+		this.info('connecting to soundcloud');
 		var token = this.token.soundcloud || this.token;
 
 		//sad ios workaround
@@ -795,7 +773,6 @@ StartApp.prototype.setSource = function (src, cb) {
 				`;
 			}
 
-			// self.audio.src = streamUrl;
 			self.player && self.player.stop();
 			self.player = createPlayer(streamUrl, {
 				context: self.context,
@@ -804,9 +781,7 @@ StartApp.prototype.setSource = function (src, cb) {
 				crossOrigin: 'Anonymous'
 			})
 			.on('load', () => {
-				self.sourceIcon.innerHTML = self.icons.soundcloud;
-				self.sourceTitle.innerHTML = titleHtml;
-				self.sourceIcon.setAttribute('title', self.sourceTitle.textContent);
+				self.showSource(titleHtml, self.icons.soundcloud);
 				self.emit('source', self.player.node, streamUrl);
 				cb && cb(null, self.player.node, streamUrl);
 
@@ -816,23 +791,22 @@ StartApp.prototype.setSource = function (src, cb) {
 				self.autoplay && self.play();
 			})
 			.on('decoding', () => {
-				self.sourceTitle.innerHTML = `decoding ${titleHtml}`;
+				self.info(`decoding ${titleHtml}`);
 			})
 			.on('progress', (e) => {
 				if (e === 0) return;
-				self.sourceTitle.innerHTML = `loading ${titleHtml}`;
+				self.info(`loading ${titleHtml}`)
 			})
 			.on('error', (err) => {
-				this.error(err, cb);
+				self.error(err, () => {
+					self.reset();
+					cb && cb(err);
+				});
 			})
 		}
 	}
 
 	// else if (/youtu/.test(url.hostname)) {
-	// 	this.sourceIcon.innerHTML = this.icons.loading;
-	// 	this.sourceTitle.innerHTML = 'connecting to youtube';
-	// 	var token = this.token.youtube || this.token;
-
 
 	// 	self.source = url.href;
 	// 	self.audio.src = url.href;
@@ -848,33 +822,32 @@ StartApp.prototype.setSource = function (src, cb) {
 		// 	return this;
 		// }
 
-		this.hideInput();
-		self.sourceIcon.innerHTML = self.icons.loading;
-		self.sourceTitle.innerHTML = `loading ${src}`;
+		this.info(`loading ${src}`);
 
-
-		self.player && self.player.stop();
-		self.player = createPlayer(src, {
-			context: self.context,
-			loop: self.loop,
+		this.player && this.player.stop();
+		this.player = createPlayer(src, {
+			context: this.context,
+			loop: this.loop,
 			buffer: isMobile, //FIXME: this can be always false here i guess
 			crossOrigin: 'Anonymous'
 		}).on('load', () => {
-			self.source = src;
+			this.source = src;
 
-			self.sourceIcon.innerHTML = this.icons.url;
-			self.sourceTitle.innerHTML = `
+			this.showSource(`
 				<a class="source-link" href="${src}" target="_blank" title="Open ${src}"><span class="text-length-limiter" style="max-width: 40vw">${src}</span></a>
-			`;
-			self.sourceIcon.setAttribute('title', self.sourceTitle.textContent);
-			self.playPause && self.audioEl.removeAttribute('hidden');
-			self.stop && self.audioStop.removeAttribute('hidden');
+			`, this.icons.url);
 
-			self.emit('source', self.player.node, src);
-			cb && cb(null, self.player.node, src);
-			self.autoplay && self.play();
+			this.playPause && this.audioEl.removeAttribute('hidden');
+			this.stop && this.audioStop.removeAttribute('hidden');
+
+			this.emit('source', this.player.node, src);
+			cb && cb(null, this.player.node, src);
+			this.autoplay && this.play();
 		}).on('error', (err) => {
-			this.error(err, cb);
+			this.error(err, () => {
+				this.reset();
+				cb && cb(err);
+			});
 		});
 
 	}
@@ -887,17 +860,18 @@ StartApp.prototype.setSource = function (src, cb) {
  * Display error
  */
 StartApp.prototype.error = function (err, cb) {
-	this.errorTitle.innerHTML = err || `bad source`;
-	this.errorEl.setAttribute('title', this.errorTitle.innerHTML);
+	this.infoTitle.innerHTML = err || `bad source`;
+	this.infoEl.setAttribute('title', this.infoTitle.innerHTML);
+	this.infoIcon.innerHTML = this.icons.error;
 
 	this.sourceEl.setAttribute('hidden', true);
-	this.errorEl.removeAttribute('hidden');
+	this.infoEl.removeAttribute('hidden');
 
 	var isSource = !!this.source;
 
 	setTimeout(() => {
 		this.sourceEl.removeAttribute('hidden');
-		this.errorEl.setAttribute('hidden', true);
+		this.infoEl.setAttribute('hidden', true);
 
 		if (!isSource) this.showInput();
 
@@ -907,16 +881,50 @@ StartApp.prototype.error = function (err, cb) {
 	return this;
 }
 
+//display loading/info status
+StartApp.prototype.info = function (msg, icon) {
+	this.infoTitle.innerHTML = msg || `loading`;
+	this.infoIcon.innerHTML = icon || this.icons.loading;
+	this.infoEl.setAttribute('title', this.infoTitle.innerHTML);
+
+	this.sourceEl.setAttribute('hidden', true);
+	this.infoEl.removeAttribute('hidden');
+
+	var isSource = !!this.source;
+
+	// to && setTimeout(() => {
+	// 	this.error('It takes too long to load. Try again later');
+	// }, to);
+
+	return this;
+};
+
+//show source
+StartApp.prototype.showSource = function (title, icon) {
+	this.hideInput();
+	this.sourceEl.removeAttribute('hidden');
+	this.infoEl.setAttribute('hidden', true);
+
+	if (icon) this.sourceIcon.innerHTML = icon;
+	if (title) this.sourceTitle.innerHTML = title;
+	this.sourceIcon.setAttribute('title', this.sourceTitle.textContent);
+
+	this.audioEl.removeAttribute('hidden');
+
+	return this;
+}
+
 
 /**
  * Show/hide source input default view
  */
 StartApp.prototype.showInput = function () {
+	this.infoEl.setAttribute('hidden', true);
+	this.sourceTitle.innerHTML = '';
 	this.sourceLinks.removeAttribute('hidden');
 	this.sourceInputURL.setAttribute('hidden', true);
 	this.sourceIcon.innerHTML = this.file ? this.icons.open : this.url ? this.icons.url : this.mic ? this.icons.mic : this.icons.open;
-	this.sourceTitle.innerHTML = '';
-	this.sourceIcon.setAttribute('title', this.sourceTitle.textContent);
+
 	this.audioEl.setAttribute('hidden', true);
 
 	//this guy keeps state
@@ -959,23 +967,15 @@ StartApp.prototype.pause = function () {
 }
 StartApp.prototype.reset = function () {
 	this.source = '';
-	this.sourceTitle.innerHTML = '';
-	this.sourceIcon.setAttribute('title', this.sourceTitle.textContent);
 	// this.sourceInputURL.value = '';
 	this.showInput();
-
 
 	if (this.micNode) {
 		this.micNode.disconnect();
 	}
 
-	if (!this.player) throw Error('Set audio source');
-	this.pause();
-	this.player.stop();
-	// this.audio.currentTime = 0;
-	// this.audio.src = '';
-
-	this.emit('stop', this.player.node);
+	this.emit('stop', this.player && this.player.node);
+	this.player && this.player.stop();
 
 	this.audioStop.querySelector('i').innerHTML = this.icons.eject;
 	this.stop && this.audioStop.setAttribute('hidden', true);
