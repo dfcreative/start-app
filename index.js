@@ -706,13 +706,14 @@ StartApp.prototype.setSource = function (src, cb) {
 			buffer: isMobile,
 			crossOrigin: 'Anonymous'
 		}).on('load', () => {
+			this.playPause && this.audioEl.removeAttribute('hidden');
+			this.stop && this.audioStop.removeAttribute('hidden');
+
 			this.emit('source', this.player.node, url);
 			cb && cb(null, url);
 			this.autoplay && this.play();
 		});
 
-		this.playPause && this.audioEl.removeAttribute('hidden');
-		this.stop && this.audioStop.removeAttribute('hidden');
 
 
 		return this;
@@ -798,10 +799,11 @@ StartApp.prototype.setSource = function (src, cb) {
 				self.sourceIcon.setAttribute('title', self.sourceTitle.textContent);
 				self.emit('source', self.player.node, streamUrl);
 				cb && cb(null, self.player.node, streamUrl);
-				self.autoplay && self.play();
 
 				self.playPause && self.audioEl.removeAttribute('hidden');
 				self.stop && self.audioStop.removeAttribute('hidden');
+
+				self.autoplay && self.play();
 			})
 			.on('decoding', () => {
 				self.sourceTitle.innerHTML = `decoding ${titleHtml}`;
