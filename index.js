@@ -20,36 +20,106 @@ var isPlainObject = require('mutype/is-object');
 var createPlayer = require('web-audio-player');
 var qs = require('querystring');
 require('get-float-time-domain-data');
+var morph = require('morphdom');
+
 
 module.exports = StartApp;
-
-
 
 /**
  * @constructor
  */
 function StartApp (opts, cb) {
 	if (!(this instanceof StartApp)) return new StartApp(opts, cb);
+	this.init(opts, cb);
+}
 
+inherits(StartApp, Emitter);
+
+//Observe paste event
+StartApp.prototype.paste = true;
+
+//Allow dropping files to browser
+StartApp.prototype.dragAndDrop = true;
+
+//show playpayse buttons
+StartApp.prototype.playPause = true;
+
+//show stop button
+StartApp.prototype.stop = true;
+
+//show title of track/status messages
+StartApp.prototype.title = true;
+
+//show icon
+StartApp.prototype.icon = true;
+
+//Enable file select
+StartApp.prototype.file = true;
+
+//Enable url select
+StartApp.prototype.url = true;
+
+//Default audio context
+StartApp.prototype.context = ctx;
+
+//Enable mic input
+StartApp.prototype.mic = !!(navigator.mediaDevices || navigator.getUserMedia || navigator.mozGetUserMedia || navigator.webkitGetUserMedia);
+
+//Default (my) soundcloud API token
+StartApp.prototype.token = {
+	soundcloud: '6b7ae5b9df6a0eb3fcca34cc3bb0ef14',
+	youtube: 'AIzaSyBPxsJRzvSSz_LOpejJhOGPyEzlRxU062M'
+};
+
+//display micro fps counter
+StartApp.prototype.fps = true;
+
+//autostart play
+StartApp.prototype.autoplay = !isMobile;
+StartApp.prototype.loop = true;
+
+
+//enable progress indicator
+StartApp.prototype.progress = true;
+
+//icon paths
+StartApp.prototype.icons = {
+	record: fs.readFileSync(__dirname + '/image/record.svg', 'utf8'),
+	error: fs.readFileSync(__dirname + '/image/error.svg', 'utf8'),
+	soundcloud: fs.readFileSync(__dirname + '/image/soundcloud.svg', 'utf8'),
+	open: fs.readFileSync(__dirname + '/image/open.svg', 'utf8'),
+	loading: fs.readFileSync(__dirname + '/image/loading.svg', 'utf8'),
+	url: fs.readFileSync(__dirname + '/image/url.svg', 'utf8'),
+	mic: fs.readFileSync(__dirname + '/image/mic.svg', 'utf8'),
+	play: fs.readFileSync(__dirname + '/image/play.svg', 'utf8'),
+	pause: fs.readFileSync(__dirname + '/image/pause.svg', 'utf8'),
+	stop: fs.readFileSync(__dirname + '/image/stop.svg', 'utf8'),
+	eject: fs.readFileSync(__dirname + '/image/eject.svg', 'utf8'),
+	settings: fs.readFileSync(__dirname + '/image/settings.svg', 'utf8'),
+	github: fs.readFileSync(__dirname + '/image/github.svg', 'utf8')
+};
+
+//do mobile routines like meta, splashscreen etc
+StartApp.prototype.mobile = true;
+
+//show params button
+StartApp.prototype.params = true;
+
+//show github link
+StartApp.prototype.github = 'dfcreative/start-app';
+
+//track history of params
+StartApp.prototype.history = false;
+
+
+
+
+//called once
+StartApp.prototype.init = function (opts, cb) {
 	var self = this;
 
 	extend(this, opts);
 
-	//ensure container
-	if (!this.container) this.container = document.body || document.documentElement;
-	this.container.classList.add(className);
-
-	//create container
-	this.sourceEl = document.createElement('div');
-	this.sourceEl.classList.add('source');
-	this.container.appendChild(this.sourceEl);
-
-	//create dynamic style
-	this.styleEl = document.createElement('style');
-	(document.head || document.documentElement).appendChild(this.styleEl);
-
-	if (!this.color) this.color = getComputedStyle(this.container).color;
-	this.setColor(this.color);
 
 	//add mobile metas
 	if (isMobile && this.mobile) {
@@ -67,6 +137,31 @@ function StartApp (opts, cb) {
 		// 	window.scrollTo(0, 0);
 		// }, 0);
 	}
+
+	//ensure container
+	if (!this.container) this.container = document.body || document.documentElement;
+	this.container.classList.add(className);
+
+	//create container
+	this.sourceEl = document.createElement('div');
+	this.sourceEl.classList.add('source');
+	this.container.appendChild(this.sourceEl);
+
+	//create error container
+	this.errorEl = document.createElement('div');
+	this.errorEl.classList.add('error');
+	this.errorEl.setAttribute('hidden', true);
+	this.errorEl.innerHTML = `<i class="error-icon">${this.icons.error}</i>
+		<span class="error-text"><strong class="error-title">Error</strong></span>`;
+	this.errorTitle = this.errorEl.querySelector('.error-title');
+	this.container.appendChild(this.errorEl);
+
+	//create dynamic style
+	this.styleEl = document.createElement('style');
+	(document.head || document.documentElement).appendChild(this.styleEl);
+
+	if (!this.color) this.color = getComputedStyle(this.container).color;
+	this.setColor(this.color);
 
 	//create layout
 	this.sourceEl.innerHTML = `
@@ -126,19 +221,7 @@ function StartApp (opts, cb) {
 		this.sourceTitle.innerHTML = `loading`;
 		this.sourceIcon.setAttribute('title', this.sourceTitle.textContent);
 		this.sourceInputURL.setAttribute('hidden', true);
-		this.setSource(this.sourceInputURL.value, (err) => {
-			this.hideInput();
-			//in case of error allow second chance
-			if (err) {
-				this.sourceTitle.innerHTML = ``;
-				this.sourceIcon.setAttribute('title', this.sourceTitle.textContent);
-				this.sourceIcon.innerHTML = this.icons.url;
-				this.sourceInputURL.removeAttribute('hidden');
-				this.sourceInputURL.focus();
-
-				return;
-			}
-		});
+		this.setSource(this.sourceInputURL.value);
 	});
 	this.sourceEl.querySelector('.source-link-url').addEventListener('click', (e) => {
 		e.preventDefault();
@@ -340,6 +423,32 @@ function StartApp (opts, cb) {
 		this.container.appendChild(this.ghLink);
 	}
 
+	//update history
+	if (this.history) {
+		this._wait = false;
+		this.on('change', () => {
+			if (this._wait) return;
+
+			this.updateHistory();
+
+			this._wait = true;
+			setTimeout(() => {
+				this._wait = false;
+			}, 100);
+		});
+	}
+
+	//observe onpaste
+	if (this.paste) {
+		this.container.addEventListener('paste', e => {
+			e.preventDefault();
+
+			//FIXME: this returns 0s in some reason
+			var dt = e.clipboardData;
+
+			this.setSource(dt.files);
+		});
+	}
 
 	//enable update routine
 	raf(function measure () {
@@ -365,27 +474,11 @@ function StartApp (opts, cb) {
 		raf(measure);
 	});
 
-	//update history
-	if (this.history) {
-		this._wait = false;
-		this.on('change', () => {
-			if (this._wait) return;
-
-			this.updateHistory();
-
-			this._wait = true;
-			setTimeout(() => {
-				this._wait = false;
-			}, 100);
-		});
-	}
-
 	this.update();
 
 	setTimeout(() => {
 		if (this.source) {
 			this.setSource(this.source, (err) => {
-				if (err) this.showInput();
 				cb && cb(null, this.source);
 			});
 		}
@@ -394,82 +487,6 @@ function StartApp (opts, cb) {
 		}
 	});
 }
-
-
-inherits(StartApp, Emitter);
-
-//Allow dropping files to browser
-StartApp.prototype.dragAndDrop = true;
-
-//show playpayse buttons
-StartApp.prototype.playPause = true;
-
-//show stop button
-StartApp.prototype.stop = true;
-
-//show title of track/status messages
-StartApp.prototype.title = true;
-
-//show icon
-StartApp.prototype.icon = true;
-
-//Enable file select
-StartApp.prototype.file = true;
-
-//Enable url select
-StartApp.prototype.url = true;
-
-//Default audio context
-StartApp.prototype.context = ctx;
-
-//Enable mic input
-StartApp.prototype.mic = !!(navigator.mediaDevices || navigator.getUserMedia || navigator.mozGetUserMedia || navigator.webkitGetUserMedia);
-
-//Default (my) soundcloud API token
-StartApp.prototype.token = {
-	soundcloud: '6b7ae5b9df6a0eb3fcca34cc3bb0ef14',
-	youtube: 'AIzaSyBPxsJRzvSSz_LOpejJhOGPyEzlRxU062M'
-};
-
-//display micro fps counter
-StartApp.prototype.fps = true;
-
-//autostart play
-StartApp.prototype.autoplay = !isMobile;
-StartApp.prototype.loop = true;
-
-
-//enable progress indicator
-StartApp.prototype.progress = true;
-
-//icon paths
-StartApp.prototype.icons = {
-	record: fs.readFileSync(__dirname + '/image/record.svg', 'utf8'),
-	error: fs.readFileSync(__dirname + '/image/error.svg', 'utf8'),
-	soundcloud: fs.readFileSync(__dirname + '/image/soundcloud.svg', 'utf8'),
-	open: fs.readFileSync(__dirname + '/image/open.svg', 'utf8'),
-	loading: fs.readFileSync(__dirname + '/image/loading.svg', 'utf8'),
-	url: fs.readFileSync(__dirname + '/image/url.svg', 'utf8'),
-	mic: fs.readFileSync(__dirname + '/image/mic.svg', 'utf8'),
-	play: fs.readFileSync(__dirname + '/image/play.svg', 'utf8'),
-	pause: fs.readFileSync(__dirname + '/image/pause.svg', 'utf8'),
-	stop: fs.readFileSync(__dirname + '/image/stop.svg', 'utf8'),
-	eject: fs.readFileSync(__dirname + '/image/eject.svg', 'utf8'),
-	settings: fs.readFileSync(__dirname + '/image/settings.svg', 'utf8'),
-	github: fs.readFileSync(__dirname + '/image/github.svg', 'utf8')
-};
-
-//do mobile routines like meta, splashscreen etc
-StartApp.prototype.mobile = true;
-
-//show params button
-StartApp.prototype.params = true;
-
-//show github link
-StartApp.prototype.github = 'dfcreative/start-app';
-
-//track history of params
-StartApp.prototype.history = false;
 
 
 /**
@@ -484,7 +501,7 @@ StartApp.prototype.update = function (opts) {
 
 	if (this.dragAndDrop && !this.isDnD) {
 		this.isDnD = true;
-		var title, icon, target;
+		var title, icon, target, isSource;
 
 		this.container.addEventListener('dragstart', (e) => {
 			//ignore dragging the container
@@ -503,6 +520,7 @@ StartApp.prototype.update = function (opts) {
 			//save initial values
 			title = this.sourceTitle.innerHTML;
 			icon = this.sourceIcon.innerHTML;
+			isSource = !!this.source;
 
 			var dt = e.dataTransfer;
 			var list = dt.files, src;
@@ -534,13 +552,7 @@ StartApp.prototype.update = function (opts) {
 			target = null;
 
 			var dt = e.dataTransfer;
-			this.setSource(dt.files, (err, data) => {
-				if (err) {
-					this.sourceTitle.innerHTML = title;
-					this.sourceIcon.setAttribute('title', this.sourceTitle.textContent);
-					this.sourceIcon.innerHTML = icon;
-				}
-			});
+			this.setSource(dt.files);
 		}, false);
 
 		this.container.addEventListener('dragover', (e) => {
@@ -670,8 +682,6 @@ StartApp.prototype.setSource = function (src, cb) {
 		return this;
 	}
 
-	this.hideInput();
-
 	//find first audio file from the list
 	if (src instanceof FileList) {
 		var list = src;
@@ -685,13 +695,7 @@ StartApp.prototype.setSource = function (src, cb) {
 		}
 
 		if (!src) {
-			this.sourceTitle.innerHTML = `not an audio`;
-			this.sourceIcon.setAttribute('title', this.sourceTitle.textContent);
-			this.sourceIcon.innerHTML = this.icons.error;
-			setTimeout(() => {
-				if (!this.source) this.showInput();
-				cb && cb(new Error('Not an audio'));
-			}, 1000);
+			this.error('Not an audio', cb);
 			return this;
 		}
 	}
@@ -699,6 +703,7 @@ StartApp.prototype.setSource = function (src, cb) {
 	//File instance case
 	if (src instanceof File) {
 		var url = URL.createObjectURL(src);
+		this.hideInput();
 		this.sourceIcon.innerHTML = this.icons.record;
 		this.sourceTitle.innerHTML = `<a class="source-link" href="${url}" target="_blank" title="${src.name}"><span class="text-length-limiter">${src.name}</span></a>`;
 		this.sourceIcon.setAttribute('title', this.sourceTitle.textContent);
@@ -718,15 +723,14 @@ StartApp.prototype.setSource = function (src, cb) {
 			this.emit('source', this.player.node, url);
 			cb && cb(null, url);
 			this.autoplay && this.play();
-		});
-
-
+		}).on('error', e => this.error(e));
 
 		return this;
 	}
 
 
 	if (/soundcloud/.test(src)) {
+		this.hideInput();
 		this.sourceIcon.innerHTML = this.icons.loading;
 		this.sourceTitle.innerHTML = 'connecting to soundcloud';
 		this.sourceIcon.setAttribute('title', this.sourceTitle.textContent);
@@ -742,14 +746,14 @@ StartApp.prototype.setSource = function (src, cb) {
 					uri: `https://api.soundcloud.com/resolve.json?client_id=${this.token.soundcloud || this.token}&url=${src}&_status_code_map[302]=200&format=json`,
 					method: 'GET'
 				}, function (err, response) {
-					if (err) return showError(err);
+					if (err) return this.error(err, cb);
 
 					var obj = JSON.parse(response.body);
 					xhr({
 						uri: obj.location,
 						method: 'GET'
 					}, function (err, response) {
-						if (err) return showError(err);
+						if (err) return this.error(err, cb);
 
 						var json = JSON.parse(response.body);
 
@@ -765,7 +769,7 @@ StartApp.prototype.setSource = function (src, cb) {
 				method: 'GET'
 			}, (err, response) => {
 				if (err) {
-					return showError(err);
+					return this.error(err, cb);
 				}
 
 				var json = JSON.parse(response.body);
@@ -819,7 +823,7 @@ StartApp.prototype.setSource = function (src, cb) {
 				self.sourceTitle.innerHTML = `loading ${titleHtml}`;
 			})
 			.on('error', (err) => {
-				showError(err);
+				this.error(err, cb);
 			})
 		}
 	}
@@ -840,10 +844,11 @@ StartApp.prototype.setSource = function (src, cb) {
 	//default url
 	else {
 		// if (!isUrl(src)) {
-		// 	showError();
+		// 	this.error();
 		// 	return this;
 		// }
 
+		this.hideInput();
 		self.sourceIcon.innerHTML = self.icons.loading;
 		self.sourceTitle.innerHTML = `loading ${src}`;
 
@@ -869,22 +874,38 @@ StartApp.prototype.setSource = function (src, cb) {
 			cb && cb(null, self.player.node, src);
 			self.autoplay && self.play();
 		}).on('error', (err) => {
-			showError(err);
+			this.error(err, cb);
 		});
 
 	}
 
-	function showError (err) {
-		self.sourceTitle.innerHTML = err || `bad URL`;
-		self.sourceIcon.setAttribute('title', self.sourceTitle.textContent);
-		self.sourceIcon.innerHTML = self.icons.error;
-		setTimeout(() => {
-			cb && cb('Bad url');
-		}, 2000);
-	}
-
 	return this;
 };
+
+
+/**
+ * Display error
+ */
+StartApp.prototype.error = function (err, cb) {
+	this.errorTitle.innerHTML = err || `bad source`;
+	this.errorEl.setAttribute('title', this.errorTitle.innerHTML);
+
+	this.sourceEl.setAttribute('hidden', true);
+	this.errorEl.removeAttribute('hidden');
+
+	var isSource = !!this.source;
+
+	setTimeout(() => {
+		this.sourceEl.removeAttribute('hidden');
+		this.errorEl.setAttribute('hidden', true);
+
+		if (!isSource) this.showInput();
+
+		cb && cb('Bad url');
+	}, 1600);
+
+	return this;
+}
 
 
 /**
@@ -897,6 +918,9 @@ StartApp.prototype.showInput = function () {
 	this.sourceTitle.innerHTML = '';
 	this.sourceIcon.setAttribute('title', this.sourceTitle.textContent);
 	this.audioEl.setAttribute('hidden', true);
+
+	//this guy keeps state
+	this.source = null;
 
 	return this;
 }

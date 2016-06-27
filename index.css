@@ -58,7 +58,7 @@ a {
 	display: none;
 }
 
-.source, .status {
+.source, .error, .status {
 	margin: 0;
 	padding: 0;
 	position: fixed;
@@ -129,9 +129,9 @@ i {
 	font-style: normal;
 	vertical-align: top;
 }
-.source i {
+.source i, .error i {
 }
-.source i svg {
+.source i svg, .error i svg {
 	margin-bottom: -.52rem;
 }
 i svg {
@@ -155,7 +155,7 @@ i svg {
 	text-overflow: ellipsis;
 	overflow: hidden;
 }
-.source-title {
+.source-title, .error-title {
 	display: inline;
 	word-break: break-all;
 }
@@ -216,7 +216,7 @@ i svg {
 	.text-length-limiter {
 		max-width: 30%;
 	}
-	.source {
+	.source, .error {
 		right: .75rem;
 		text-align: center;
 	}
