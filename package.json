@@ -1,6 +1,6 @@
 {
   "name": "start-app",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "description": "Create demo page for an audio-component",
   "main": "dist.js",
   "scripts": {
