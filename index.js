@@ -291,6 +291,7 @@ StartApp.prototype.init = function (opts, cb) {
 	this.stop && this.audioStop.addEventListener('click', (e) => {
 		e.preventDefault();
 		this.reset();
+		this.showInput();
 	});
 
 	//init progress bar
@@ -691,7 +692,7 @@ StartApp.prototype.setSource = function (src, cb) {
 		this.showSource(`<a class="source-link" href="${url}" target="_blank" title="${src.name}"><span class="text-length-limiter">${src.name}</span></a>`, this.icons.record);
 		this.source = url;
 
-		this.player && this.player.stop();
+		this.reset();
 		this.player = createPlayer(url, {
 			context: this.context,
 			loop: this.loop,
@@ -773,7 +774,7 @@ StartApp.prototype.setSource = function (src, cb) {
 				`;
 			}
 
-			self.player && self.player.stop();
+			self.reset();
 			self.player = createPlayer(streamUrl, {
 				context: self.context,
 				loop: self.loop,
@@ -799,7 +800,6 @@ StartApp.prototype.setSource = function (src, cb) {
 			})
 			.on('error', (err) => {
 				self.error(err, () => {
-					self.reset();
 					cb && cb(err);
 				});
 			})
@@ -824,7 +824,7 @@ StartApp.prototype.setSource = function (src, cb) {
 
 		this.info(`loading ${src}`);
 
-		this.player && this.player.stop();
+		this.reset();
 		this.player = createPlayer(src, {
 			context: this.context,
 			loop: this.loop,
@@ -845,7 +845,6 @@ StartApp.prototype.setSource = function (src, cb) {
 			this.autoplay && this.play();
 		}).on('error', (err) => {
 			this.error(err, () => {
-				this.reset();
 				cb && cb(err);
 			});
 		});
@@ -968,7 +967,6 @@ StartApp.prototype.pause = function () {
 StartApp.prototype.reset = function () {
 	this.source = '';
 	// this.sourceInputURL.value = '';
-	this.showInput();
 
 	if (this.micNode) {
 		this.micNode.disconnect();
